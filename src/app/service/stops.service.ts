@@ -11,7 +11,7 @@ import { Stop } from '../data/stops';
 
 export class StopsService {
 
-  private _apiBaseUrl ="./transport-api-api"; 
+  private _apiBaseUrl ="./transport-api"; 
 
   constructor(private _http : HttpClient) { }
 
