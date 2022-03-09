@@ -11,13 +11,14 @@ import { StopsService } from 'src/app/service/stops.service';
 export class MapComponent implements OnInit {
 
   
-  public zoom :any= 12 ;
+  public zoom :any= 13 ;
   public lng:any=1.390962;
   public lat:any=43.506453;
   public myMap:any;
   public clientHeight :Number=0;
   public clientWidth :Number=0;
   public stopsService:StopsService;
+  public mapCacheStops = new Map();
 
   constructor(private _stopsService:StopsService) {
     this.stopsService = _stopsService
@@ -42,7 +43,7 @@ export class MapComponent implements OnInit {
     this.lat = e.lat;
     this.lng = e.lng;
 
-    //this._stopsService.getStopsByIdPosition$(this.calculIdPosition(this.lat, this.lng));
+    this.addMarker(this.myMap.getBounds().getSouth(), this.myMap.getBounds().getWest());
   }
 
   updateIcon(){
@@ -69,10 +70,10 @@ export class MapComponent implements OnInit {
       this.onMapMove(this.myMap.getCenter());
     });
 
-    this.clientHeight = this.myMap.getBounds().getNorth() - this.myMap.getBounds().getSouth();
-    this.clientWidth = this.myMap.getBounds().getEast() - this.myMap.getBounds().getWest();
+    this.clientHeight = this.myMap.getBounds().getSouth();
+    this.clientWidth = this.myMap.getBounds().getWest();
 
-    this.addMarker();
+    this.addMarker(this.myMap.getBounds().getSouth(), this.myMap.getBounds().getWest());
 
   var points = [
     L.latLng(this.lat, this.lng),
@@ -99,26 +100,34 @@ export class MapComponent implements OnInit {
    }); 
 }
 
-addMarker(){
+addMarker(lat:number, lng:number){
   const myIcon = L.icon({
-    iconSize: [ 25, 41 ],
+    iconSize: [ 15, 25 ],
     iconAnchor: [ 13, 41 ],
     iconUrl: 'assets/img/arretBus.png',
     iconRetinaUrl: 'assets/img/arretBus.png',
     shadowUrl: 'assets/img/arretBus.png'
   });
 
-  this.stopsService.getStopsByIdPosition$(this.calculIdPosition(this.lat, this.lng))
-  .subscribe({
-    next: (lstStops : Stop[])=>{ 
-      lstStops.forEach(point => {
-        L.marker([point.coord[0].lat, point.coord[0].lon], {icon: myIcon})
-        .bindPopup(point.name)
-        .addTo(this.myMap);
-      });
-    },
-    error: (err) => { console.log("error:"+err)}
- });
+  let idPosition = this.calculIdPosition(lat, lng);
+  console.log(idPosition);
+  console.log(this.mapCacheStops);
+  if (!this.mapCacheStops.get(idPosition)){//on regarde dans le cache
+    this.mapCacheStops.set(idPosition, true);
+    this.stopsService.getStopsByIdPosition$(idPosition)
+    .subscribe({
+      next: (lstStops : Stop[])=>{ 
+        lstStops.forEach(point => {
+          L.marker([point.coord[0].lat, point.coord[0].lon], {icon: myIcon})
+          .bindPopup(point.name)
+          .addTo(this.myMap);
+        });
+        
+        console.log("load : " + idPosition);
+      },
+      error: (err) => { console.log("error:"+err)}
+    });
+  }
 
 }
   
