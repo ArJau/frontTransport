@@ -14,9 +14,5 @@ export class Stop{
         //public location_type : string="",
         //public parent_station : string=""
         ){
-
-        }
-
-
-        
+    }
 }

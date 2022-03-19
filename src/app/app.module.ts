@@ -6,11 +6,13 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { MapComponent } from './component/map/map.component';
 import { HttpClientModule } from '@angular/common/http';
+import { StopComponent } from './component/stop/stop.component';
 
 @NgModule({
   declarations: [
     AppComponent,
-    MapComponent
+    MapComponent,
+    StopComponent
   ],
   imports: [
     BrowserModule,
