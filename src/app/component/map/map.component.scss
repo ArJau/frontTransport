@@ -1,5 +1,8 @@
 #busMap {
     height: 600px;
-    width: 100%
+    width: 60%
 }
  
+
+.leaflet-overlay-pane { z-index: 5; }
+.leaflet-shadow-pane  { z-index: 4; }

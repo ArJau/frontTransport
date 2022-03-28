@@ -2,9 +2,10 @@ export class Trajet{
     result: any;
     constructor(
         public id : string="",
+        public route_id : string="",
         public route_text_color : string="",
         public route_color : string="",
-        public name : string="",
+        public route_long_name : string="",
         public idPosition : [], 
         public stops :[{
             id: string,

@@ -13,8 +13,11 @@ export class MapComponent implements OnInit {
 
   
   public zoom :any= 18 ;
-  public lng:any=1.390962;
-  public lat:any=43.506453;
+  //public lng:any=1.390962;//pinsaguel
+  //public lat:any=43.506453;
+
+  public lng:any=-4.481778;
+  public lat:any=48.399633;
   public myMap:any;
   public clientHeight :Number=0;
   public clientWidth :Number=0;
@@ -23,7 +26,7 @@ export class MapComponent implements OnInit {
 
   public pVerti :number[]= [1, 10];//precisionVerticale
   public pHoriz :number[]= [2, 10];//precisionHorizontale
-  public allMarker : any = []
+  public mapMarker = new Map();
   public myIcons:any = [];
 
   constructor(private _stopsService:StopsService) {
@@ -63,8 +66,6 @@ export class MapComponent implements OnInit {
 
   onMapZoom(e:any){
     this.zoom = e;
-    
-
   }
   
   onMapMove(e:any){
@@ -79,29 +80,29 @@ export class MapComponent implements OnInit {
   ngOnInit(): void {
 
     this.myIcons.push( L.icon({
-      iconSize: [ 10, 15 ],
-      iconAnchor: [ 0, 30 ],
+      iconSize: [ 12, 18 ],
+      iconAnchor: [ 7, 10 ],
       iconUrl: 'assets/img/arretBus.png',
       iconRetinaUrl: 'assets/img/arretBus.png',
       shadowUrl: 'assets/img/arretBus.png'
     }));
     this.myIcons.push( L.icon({
-      iconSize: [ 10, 15 ],
+      iconSize: [ 12, 18 ],
       iconAnchor: [ 0,0 ],
       iconUrl: 'assets/img/arretBusVert.png',
       iconRetinaUrl: 'assets/img/arretBusVert.png',
       shadowUrl: 'assets/img/arretBusVert.png'
     }));
     this.myIcons.push( L.icon({
-      iconSize: [ 15, 25 ],
-      iconAnchor: [  0,0 ],
+      iconSize: [  12, 18 ],
+      iconAnchor: [  0,20 ],
       iconUrl: 'assets/img/arretBusBleu.png',
       iconRetinaUrl: 'assets/img/arretBusBleu.png',
       shadowUrl: 'assets/img/arretBusBleu.png'
     }));
     this.myIcons.push( L.icon({
       iconSize: [ 0, 0 ],
-      iconAnchor: [  0,0 ],
+      iconAnchor: [ 0,0 ],
       iconUrl: 'assets/img/arretBusVide.png',
       iconRetinaUrl: 'assets/img/arretBusVide.png',
       shadowUrl: 'assets/img/arretBusVide.png'
@@ -121,16 +122,18 @@ export class MapComponent implements OnInit {
       this.clientWidth = this.myMap.getBounds().getEast() - this.myMap.getBounds().getWest();
 
       
-      if (this.zoom>=13){
-        console.log("on:" + this.zoom);
-        this.allMarker.forEach((marker:L.Marker)=>{
-          marker.setIcon(this.myIcons[0]);
-        });
+      if (this.zoom>=14){
+        for (const [key, value] of this.mapMarker) {
+          value[0].forEach((marker:L.Marker)=>{
+            marker.setIcon(this.myIcons[0]);
+          });
+        }
       }else{
-        console.log("off:" + this.zoom);
-        this.allMarker.forEach((marker:L.Marker)=>{
-          marker.setIcon(this.myIcons[3]);
-        });
+        for (const [key, value] of this.mapMarker) {
+          value[0].forEach((marker:L.Marker)=>{
+            marker.setIcon(this.myIcons[3]);
+          });
+        }
       }
     });
 
@@ -142,6 +145,7 @@ export class MapComponent implements OnInit {
     this.clientWidth = this.myMap.getBounds().getWest();
 
     this.addMarker(this.myMap.getBounds().getSouth(), this.myMap.getBounds().getWest());
+
 }
 
 addMarker(lat:number, lng:number){
@@ -149,55 +153,43 @@ addMarker(lat:number, lng:number){
   let idPosition = this.calculIdPosition(lat, lng);
   if (!this.mapCacheStops.get(idPosition)){//on evite de recharger les memes arrets
     this.mapCacheStops.set(idPosition, true);
-    
-    /*this.stopsService.getStopsByIdPosition$(idPosition)
-    .subscribe({
-      next: (lstStops : Stop[])=>{ 
-        lstStops.forEach(points => {
-          //console.log(points.coord.length);
-          //for (let numCoord in points.coord){
-          //  L.marker([points.coord[numCoord].lat, points.coord[numCoord].lon], {icon: myIcons[(Number(numCoord)>2?0:numCoord)]})
-          //  .bindPopup(points.name)
-          //  .addTo(this.myMap);
-          //}
-
-          L.marker([points.coord[0].lat, points.coord[0].lon], {icon: myIcons[0]})
-          .bindPopup("id: " + points.id + "<br>" +  points.name + "<br>"+ " lat: " + points.coord[0].lat + " lon: " + points.coord[0].lon)
-          .addTo(this.myMap);
-        });
-        
-        console.log("load : " + idPosition +", nb stop:" + lstStops.length);
-      },
-      error: (err) => { console.log("error:"+err)}
-    });*/
 
     this.stopsService.getStopsByIdPositionTrajet$(idPosition)
     .subscribe({
       next: (lstTrajet : Trajet[])=>{
         lstTrajet.forEach(trajet => {
-          var stopTrajet :any= [];
+          
+        if (!this.mapMarker.get(trajet.route_id)){
+          this.mapMarker.set(trajet.route_id, [[],[]]);
           trajet.stops.forEach(stop => {
-            stopTrajet.push(L.latLng(stop.stop_lat, stop.stop_lon));
-           
-            this.allMarker.push(L.marker([stop.stop_lat, stop.stop_lon], {icon: this.myIcons[0]})
-            .bindPopup("id: " + trajet.id + "<br>" +  stop.stop_name + "<br>"+ " lat: " + stop.stop_lat + " lon: " + stop.stop_lon)
-            .addTo(this.myMap));
+            this.mapMarker.get(trajet.route_id)[0].push(
+              L.marker([stop.stop_lat, stop.stop_lon], {icon: (this.zoom>=14?this.myIcons[0]:this.myIcons[3])})
+              .bindPopup("id: " + trajet.id + "<br>" +  stop.stop_name + "<br>"+ " lat: " + stop.stop_lat + " lon: " + stop.stop_lon)
+              .addTo(this.myMap));
+              this.mapMarker.get(trajet.route_id)[1].push(
+              L.latLng(stop.stop_lat, stop.stop_lon));
           });
           
           //console.log(trajet.route_color + " " + stopTrajet.length);  
-
-          L.polyline(stopTrajet, {
+          L.polyline(this.mapMarker.get(trajet.route_id)[1], {
             color: "#" + trajet.route_color, 
             weight: 5
            })
-           .bindPopup(trajet.name)
-           .addTo(this.myMap)
-           .addEventListener("click", () =>{
-             alert("toto");
-           }); 
+           .bindPopup(trajet.route_long_name)
+           .addEventListener("mouseover", (line) =>{
+            this.mapMarker.get(trajet.route_id)[0].forEach((marker:L.Marker)=>{
+                marker.setIcon(this.myIcons[2]);
+            });
+              
+            line.target.bringToFront();
+           }).addEventListener("mouseout", (line) =>{
+            this.mapMarker.get(trajet.route_id)[0].forEach((marker:L.Marker)=>{
+              marker.setIcon(this.zoom>=14?this.myIcons[0]:this.myIcons[3]);
+            });
+           }).addTo(this.myMap); 
 
+          }
         });
-        
         console.log("load : " + idPosition +", nb stop:" + lstTrajet.length);
       },
       error: (err) => { console.log("error:"+err)}
