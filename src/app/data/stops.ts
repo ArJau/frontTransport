@@ -16,3 +16,8 @@ export class Stop{
         ){
     }
 }
+
+export class Greeting{
+    id:any;
+    content:any;
+}

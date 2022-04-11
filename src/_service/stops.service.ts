@@ -2,8 +2,8 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { map } from 'leaflet';
 import { Observable, tap } from 'rxjs';
-import { Stop } from '../data/stops';
-import { Trajet } from '../data/trajets';
+import { Stop } from '../app/data/stops';
+import { Trajet } from '../app/data/trajets';
 
 @Injectable({
   providedIn: 'root'
@@ -12,14 +12,14 @@ import { Trajet } from '../data/trajets';
 
 export class StopsService {
 
-  private _apiBaseUrl ="./transport-api"; 
-
+  
+  private DATA_API ="./transport-api"; 
   constructor(private _http : HttpClient) { }
 
   public getStopsByIdPosition$(idPosition:string) : Observable<Stop[]>{
     const params = new HttpParams()
           .set('idPosition',idPosition);
-    let url = this._apiBaseUrl + `/public/lstStops?${params.toString()}`;
+    let url = this.DATA_API + `/public/lstStops?${params.toString()}`;
     console.log( "url = " + url);
     return this._http.get<Stop[]>(url)
   }
@@ -27,7 +27,7 @@ export class StopsService {
   public getStopsByIdPositionTrajet$(idPosition:string) : Observable<Trajet[]>{
     const params = new HttpParams()
           .set('idPosition',idPosition);
-    let url = this._apiBaseUrl + `/public/lstStopsTrajet?${params.toString()}`;
+    let url = this.DATA_API + `/public/lstStopsTrajet?${params.toString()}`;
     console.log( "url = " + url);
     return this._http.get<Trajet[]>(url)
   }

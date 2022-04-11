@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import * as L from 'leaflet';
-import { Stop } from 'src/app/data/stops';
-import { StopsService } from 'src/app/service/stops.service';
+import { StopsService } from 'src/_service/stops.service';
 import { Trajet } from 'src/app/data/trajets';
 
 @Component({
@@ -94,8 +93,8 @@ export class MapComponent implements OnInit {
       shadowUrl: 'assets/img/arretBusVert.png'
     }));
     this.myIcons.push( L.icon({
-      iconSize: [  12, 18 ],
-      iconAnchor: [  0,20 ],
+      iconSize: [  17, 25 ],
+      iconAnchor: [  7,10 ],
       iconUrl: 'assets/img/arretBusBleu.png',
       iconRetinaUrl: 'assets/img/arretBusBleu.png',
       shadowUrl: 'assets/img/arretBusBleu.png'
@@ -166,6 +165,7 @@ addMarker(lat:number, lng:number){
               L.marker([stop.stop_lat, stop.stop_lon], {icon: (this.zoom>=14?this.myIcons[0]:this.myIcons[3])})
               .bindPopup("id: " + trajet.id + "<br>" +  stop.stop_name + "<br>"+ " lat: " + stop.stop_lat + " lon: " + stop.stop_lon)
               .addTo(this.myMap));
+
               this.mapMarker.get(trajet.route_id)[1].push(
               L.latLng(stop.stop_lat, stop.stop_lon));
           });
@@ -176,17 +176,28 @@ addMarker(lat:number, lng:number){
             weight: 5
            })
            .bindPopup(trajet.route_long_name)
+           .addEventListener("click", (line) =>{
+            this.mapMarker.get(trajet.route_id)[0].forEach((marker:L.Marker)=>{
+                marker.setIcon(this.myIcons[2]);
+                marker.setZIndexOffset(150);
+            });
+              
+            line.target.bringToFront();
+           })
            .addEventListener("mouseover", (line) =>{
             this.mapMarker.get(trajet.route_id)[0].forEach((marker:L.Marker)=>{
                 marker.setIcon(this.myIcons[2]);
+                marker.setZIndexOffset(150);
             });
               
             line.target.bringToFront();
            }).addEventListener("mouseout", (line) =>{
             this.mapMarker.get(trajet.route_id)[0].forEach((marker:L.Marker)=>{
               marker.setIcon(this.zoom>=14?this.myIcons[0]:this.myIcons[3]);
+              marker.setZIndexOffset(100);
             });
-           }).addTo(this.myMap); 
+           })
+           .addTo(this.myMap); 
 
           }
         });
