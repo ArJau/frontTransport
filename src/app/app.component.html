@@ -7,6 +7,7 @@
       <li class="nav-item"*ngIf="isLoggedIn">
         <a href="/home" class="nav-link" routerLink="map">Map </a>
       </li>
+      <!--
       <li class="nav-item" *ngIf="showAdminBoard">
         <a href="/admin" class="nav-link" routerLink="admin">Admin Board</a>
       </li>
@@ -16,6 +17,7 @@
       <li class="nav-item">
         <a href="/user" class="nav-link" *ngIf="isLoggedIn" routerLink="user">User</a>
       </li>
+      -->
     </ul>
     <ul class="navbar-nav ml-auto" *ngIf="!isLoggedIn">
       <li class="nav-item">
@@ -26,9 +28,9 @@
       </li>
     </ul>
     <ul class="navbar-nav ml-auto" *ngIf="isLoggedIn">
-      <li class="nav-item">
+      <!--<li class="nav-item">
         <a href="/profile" class="nav-link" routerLink="profile">{{ username }}</a>
-      </li>
+      </li>-->
       <li class="nav-item">
         <a href class="nav-link" (click)="logout()">LogOut</a>
       </li>

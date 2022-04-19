@@ -1,17 +1,23 @@
-<div style="text-align:center">
-    <h1>
-      Bienvenue sur France Bus
-    </h1>
+<div class="box">
+  <div id="recherche">
+    <app-recherche-lieu (locationSelected)="getAddress($event)"></app-recherche-lieu>
   </div>
-   
-  <!-- Déclaration du conteneur de la carte avec l'id "busMap" -->
-  <div id="busMap">
-   
+  <div id="map">
+    <div style="text-align:center">
+      <h1>
+        Bienvenue sur France Bus
+      </h1>
+    </div>
+
+    <!-- Déclaration du conteneur de la carte avec l'id "busMap" -->
+    <div id="busMap" >
+
+    </div>
   </div>
-  <input type="text" [(ngModel)] ="zoom"/>
-  <input type="text" [(ngModel)] ="lat"/>
+</div>
+<app-detail-stop stopId={{markSelected}}></app-detail-stop>
+
+  <!--<input type="text" [(ngModel)] ="lat"/>
   <input type="text" [(ngModel)] ="lng"/>
+  <input type="text" [(ngModel)] ="zoom"/>-->
   
-  <input type="text" [(ngModel)] ="clientHeight"/>
-  
-  <input type="text" [(ngModel)] ="clientWidth"/>

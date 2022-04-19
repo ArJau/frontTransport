@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import { map } from 'leaflet';
 import { Observable, tap } from 'rxjs';
 import { Stop } from '../app/data/stops';
-import { Trajet } from '../app/data/trajets';
+import { Coord, Trajet } from '../app/data/trajets';
 
 @Injectable({
   providedIn: 'root'
@@ -31,4 +31,12 @@ export class StopsService {
     console.log( "url = " + url);
     return this._http.get<Trajet[]>(url)
   }
+
+  /*public getShapessById$(idPosition:string) : Observable<Map<String,Coord[]>>{
+    const params = new HttpParams()
+          .set('idPosition',idPosition);
+    let url = this.DATA_API + `/public/shapes/${params.toString()}`;
+    console.log( "url = " + url);
+    return this._http.get<Trajet[]>(url)
+  }*/
 }

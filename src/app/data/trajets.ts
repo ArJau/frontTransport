@@ -18,3 +18,10 @@ export class Trajet{
         ){
     }
 }
+
+export class Coord{
+    constructor(
+    public lat:number=0,
+    public lon:number=0
+    ){}
+}

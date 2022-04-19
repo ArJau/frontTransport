@@ -15,6 +15,8 @@ import { BoardModeratorComponent } from './component/board-moderator/board-moder
 import { BoardUserComponent } from './component/board-user/board-user.component';
 import { LoginComponent } from './component/login/login.component';
 import { RouterModule, Routes } from '@angular/router';
+import { RechercheLieuComponent } from './component/recherche-lieu/recherche-lieu.component';
+import { DetailStopComponent } from './component/detail-stop/detail-stop.component';
 
 
 
@@ -29,7 +31,9 @@ import { RouterModule, Routes } from '@angular/router';
     BoardAdminComponent,
     BoardModeratorComponent,
     BoardUserComponent,
-    AppComponent
+    AppComponent,
+    RechercheLieuComponent,
+    DetailStopComponent
   ],
   imports: [
     BrowserModule,

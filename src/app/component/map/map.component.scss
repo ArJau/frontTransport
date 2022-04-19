@@ -1,8 +1,19 @@
 #busMap {
     height: 600px;
-    width: 60%
+    width: 100%
 }
  
 
 .leaflet-overlay-pane { z-index: 5; }
 .leaflet-shadow-pane  { z-index: 4; }
+
+.box{
+    display: flex;
+}
+
+#recherche{
+    flex: 1;
+}
+#map{
+    flex: 5;
+}
