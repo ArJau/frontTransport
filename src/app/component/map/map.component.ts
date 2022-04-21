@@ -165,7 +165,10 @@ export class MapComponent implements OnInit {
                     L.marker([stop.stop_lat, stop.stop_lon], { icon: (this.zoom >= 14 ? this.myIcons[0] : this.myIcons[3]) })
                       .bindPopup("id: " + trajet.id + "<br>" + stop.stop_name + "<br>" + " lat: " + stop.stop_lat + " lon: " + stop.stop_lon)
                       .addEventListener("click", (marker) => {
-                        this.markSelected = stop.id;
+                        console.log(stop);
+                        console.log(trajet.route_id);
+                        console.log(trajet.id);
+                        this.markSelected = stop.stop_id;
                       })
                       .addTo(this.myMap));
 

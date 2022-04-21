@@ -15,7 +15,7 @@
     </div>
   </div>
 </div>
-<app-detail-stop stopId={{markSelected}}></app-detail-stop>
+<app-detail-stop *ngIf="markSelected" stopId={{markSelected}}></app-detail-stop>
 
   <!--<input type="text" [(ngModel)] ="lat"/>
   <input type="text" [(ngModel)] ="lng"/>

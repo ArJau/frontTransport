@@ -1,7 +1,6 @@
 { 
 "/transport-api": { "secure": "false" ,"target": "http://localhost:8282" },
-"/api/auth": { "secure": "false" ,"target": "http://localhost:8085" }, 
-"/api/test": { "secure": "false" ,"target": "http://localhost:8085" }, 
+"/api": { "secure": "false" ,"target": "http://localhost:8085" }, 
 "/search": { "secure": "false", "changeOrigin": true, "target": "https://nominatim.openstreetmap.org" }
-
 }
+
