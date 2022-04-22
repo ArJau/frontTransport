@@ -1,2 +1,2 @@
-put dist/front-transport/*
+put -r dist/front-transport/*
 quit
