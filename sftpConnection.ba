@@ -1,2 +1,3 @@
+cd ..
 put -r dist/front-transport/*
 quit
