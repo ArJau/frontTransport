@@ -14,7 +14,8 @@ export class Trajet{
             stop_lat: number,
             stop_lon: number,
             idPosition: string
-            }]
+            }], 
+        public shapes:[]
         ){
     }
 }
@@ -25,3 +26,25 @@ export class Coord{
     public lon:number=0
     ){}
 }
+
+export class DescReseau  {
+    constructor(
+        public title:string = "",
+        public id:string="",
+        public url:string="",
+        public rt:boolean=false,
+        public nbRoutes:number=0,
+        public center:number[]
+        ){}
+};
+
+
+export class realTimesVehicles  {
+    constructor(
+        public routeId:string = "",
+        public coord:number[],
+        public bearing:number,
+        public tripId:string = "",
+        ){}
+}
+

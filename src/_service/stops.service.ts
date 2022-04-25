@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import { map } from 'leaflet';
 import { Observable, tap } from 'rxjs';
 import { Stop } from '../app/data/stops';
-import { Coord, Trajet } from '../app/data/trajets';
+import { Coord, DescReseau, realTimesVehicles, Trajet } from '../app/data/trajets';
 
 @Injectable({
   providedIn: 'root'
@@ -11,32 +11,28 @@ import { Coord, Trajet } from '../app/data/trajets';
 
 
 export class StopsService {
+  private DATA_API = "./transport-api";
+  constructor(private _http: HttpClient) { }
+
+  public getDescriptionReseaux$(): Observable<DescReseau[]> {
+    let url = this.DATA_API + `/public/lstDescriptionReseau?`;
+    console.log("url = " + url);
+    return this._http.get<DescReseau[]>(url)
+  }
+
+  public getStopsByIdPositionTrajet$(idPosition: string): Observable<Trajet[]> {
+    const params = new HttpParams()
+      .set('idPosition', idPosition);
+    let url = this.DATA_API + `/public/lstStopsTrajet?${params.toString()}`;
+    console.log("url = " + url);
+    return this._http.get<Trajet[]>(url)
+  }
+
+  public getRealtimeVehiclesByIdReseaux$(idReseau: string): Observable<realTimesVehicles[]> {
+    let url = this.DATA_API + `/public/realtimesvehicles/${idReseau}`;
+    console.log("url = " + url);
+    return this._http.get<realTimesVehicles[]>(url)
+  }
 
   
-  private DATA_API ="./transport-api"; 
-  constructor(private _http : HttpClient) { }
-
-  public getStopsByIdPosition$(idPosition:string) : Observable<Stop[]>{
-    const params = new HttpParams()
-          .set('idPosition',idPosition);
-    let url = this.DATA_API + `/public/lstStops?${params.toString()}`;
-    console.log( "url = " + url);
-    return this._http.get<Stop[]>(url)
-  }
-
-  public getStopsByIdPositionTrajet$(idPosition:string) : Observable<Trajet[]>{
-    const params = new HttpParams()
-          .set('idPosition',idPosition);
-    let url = this.DATA_API + `/public/lstStopsTrajet?${params.toString()}`;
-    console.log( "url = " + url);
-    return this._http.get<Trajet[]>(url)
-  }
-
-  /*public getShapessById$(idPosition:string) : Observable<Map<String,Coord[]>>{
-    const params = new HttpParams()
-          .set('idPosition',idPosition);
-    let url = this.DATA_API + `/public/shapes/${params.toString()}`;
-    console.log( "url = " + url);
-    return this._http.get<Trajet[]>(url)
-  }*/
 }
