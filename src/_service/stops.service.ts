@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import { map } from 'leaflet';
 import { Observable, tap } from 'rxjs';
 import { Stop } from '../app/data/stops';
-import { Coord, DescReseau, realTimesVehicles, Trajet } from '../app/data/trajets';
+import { Coord, DescReseau, realTimesAlerts, realTimesVehicles, Trajet } from '../app/data/trajets';
 
 @Injectable({
   providedIn: 'root'
@@ -32,6 +32,12 @@ export class StopsService {
     let url = this.DATA_API + `/public/realtimesvehicles/${idReseau}`;
     console.log("url = " + url);
     return this._http.get<realTimesVehicles[]>(url)
+  }
+
+  public getRealtimeAlertsByIdReseaux$(idReseau: string): Observable<realTimesAlerts[]> {
+    let url = this.DATA_API + `/public/realtimesalerts/${idReseau}`;
+    console.log("url = " + url);
+    return this._http.get<realTimesAlerts[]>(url)
   }
 
   

@@ -9,6 +9,10 @@
       </h1>
     </div>
 
+    <div>
+      <app-filtre-reseaux></app-filtre-reseaux>
+    </div>
+    
     <!-- Déclaration du conteneur de la carte avec l'id "busMap" -->
     <div id="busMap" >
 
@@ -17,7 +21,8 @@
 </div>
 <app-detail-stop *ngIf="markSelected" stopId={{markSelected}}></app-detail-stop>
 
-  <!--<input type="text" [(ngModel)] ="lat"/>
-  <input type="text" [(ngModel)] ="lng"/>-->
   <input type="text" [(ngModel)] ="zoom"/>
+<!--<input type="text" [(ngModel)] ="nbReseaux"/>-->
+
+  
   

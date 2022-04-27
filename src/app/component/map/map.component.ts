@@ -1,9 +1,10 @@
-import { Component, EventEmitter, OnInit, Output } from '@angular/core';
+import { Component, ElementRef, EventEmitter, OnInit, Output, ViewChild } from '@angular/core';
 import * as L from 'leaflet';
 import { StopsService } from 'src/_service/stops.service';
 import { DescReseau, realTimesVehicles, Trajet } from 'src/app/data/trajets';
-import { RechercherLieuService } from 'src/_service/rechercher-lieu.service';
-import { MapType } from '@angular/compiler';
+import 'leaflet-rotatedmarker';
+import { LstReseauxObservableService } from 'src/_service/lst-reseaux-observable.service';
+
 
 @Component({
   selector: 'app-map',
@@ -17,28 +18,29 @@ export class MapComponent implements OnInit {
   //public lng:any=-4.481778; brest
   //public lat:any=48.399633;
   public lat: number = 46.7;
-  public lng: number = 0; //centre
+  public lng: number = 2.2; //centre
   public zoom: number = 6;
 
   public myMap: any;
-  public clientHeight: Number = 0;
-  public clientWidth: Number = 0;
-  public mapCacheStops = new Map();
-  public mapCacheVehicles = new Map();
 
-
-  public pVerti: number[] = [1, 10];//precisionVerticale
-  public pHoriz: number[] = [2, 10];//precisionHorizontale
-  public mapMarker = new Map();
+  public pVerti: number[] = [2, 10];//precisionVerticale
+  public pHoriz: number[] = [6, 10];//precisionHorizontale
   public stopIcons: any = [];
   public busIcons: any = [];
-
+  public nbReseaux: Number = 0;
   public markSelected: any;
 
+  
+  public mapMarker = new Map();
+  public mapLine = new Map();
+  public mapCacheStops = new Map();
+  public mapCacheVehicles = new Map();
+  public mapDescReseau = new Map();
+  public mapCheckBoxDescReseau = new Map();
 
-  constructor(private _stopsService: StopsService) {
+  constructor(private _stopsService: StopsService, 
+    private _lstReseauxObservableService: LstReseauxObservableService) {
   }
-
 
   calculIdPosition(lat: number, lon: number) {
     return this.calculEchelleVerticale(lat) + this.calculEchelleHorzontale(lon);
@@ -56,14 +58,44 @@ export class MapComponent implements OnInit {
   calculTuileEcran() {
     let nord = Number(this.calculEchelleVerticale(this.myMap.getBounds().getNorth()));
     let sud = Number(this.calculEchelleVerticale(this.myMap.getBounds().getSouth()));
-    //console.log("nord-sud: " + (nord-sud));
+    console.log("sud: " + sud + " nord: " + nord + ", nord-sud: " + (nord-sud));
     let ouest = Number(this.calculEchelleHorzontale(this.myMap.getBounds().getWest()));
     let est = Number(this.calculEchelleHorzontale(this.myMap.getBounds().getEast()));
-    //console.log("ouest-est" + (ouest-est));
+    
+    console.log("ouest: " + ouest + ", est: " + est + ", est-ouest: " + (est-ouest));
   }
 
   onMapZoom(e: any) {
-    this.zoom = e;
+    this.zoom = this.myMap.getZoom();
+    this.onMapMove(this.myMap.getCenter());
+
+    for (const [key, value] of this.mapMarker) {
+      value[0].forEach((marker: L.Marker) => {
+        marker.setIcon(this.stopIcons[this.getIcone(false)]);
+      });
+    }
+
+
+    if (this.zoom <= 10) {
+      //console.log("onMapZoom:" + this.zoom)
+      for (const [key, value] of this.mapLine) {
+        this.mapLine.get(key).forEach((line: L.Polyline) => {
+          line.remove();
+        });
+      }
+
+      for (const [key, value] of this.mapCacheVehicles) {
+        this.mapCacheVehicles.get(key).forEach((marker: L.Marker) => {
+          marker.remove();
+        });
+      }
+
+      this.mapCacheStops = new Map();//map des tuiles
+      this.mapMarker = new Map();//map des arret de bus
+      this.mapLine = new Map();//map des ligne de bus
+      this.mapCacheVehicles = new Map();//map de vehicule temps réel
+      this.mapCheckBoxDescReseau = new Map();//map des CheckBox selectionnant les réseaux
+    }
   }
 
   onMapMove(e: any) {
@@ -75,42 +107,37 @@ export class MapComponent implements OnInit {
 
   ngOnInit(): void {
     this.stopIcons.push(L.icon({
-      iconSize: [0, 0],
-      iconAnchor: [0, 0],
-      iconUrl: 'assets/img/arretBusVide.png',
-      iconRetinaUrl: 'assets/img/arretBusVide.png',
-      shadowUrl: 'assets/img/arretBusVide.png'
+      iconSize: [0, 0], iconAnchor: [0, 0],
+      iconUrl: 'assets/img/arretBusVide.png'
     }));
     this.stopIcons.push(L.icon({
       iconSize: [0, 0],
       iconAnchor: [0, 0],
       iconUrl: 'assets/img/arretBusPoint.png',
-      iconRetinaUrl: 'assets/img/arretBusPoint.png',
-      shadowUrl: 'assets/img/arretBusPoint.png'
+      //iconRetinaUrl: 'assets/img/arretBusPoint.png',
+      //shadowUrl: 'assets/img/arretBusPoint.png'
     }));
     this.stopIcons.push(L.icon({
-      iconSize: [10, 15],
-      iconAnchor: [7, 10],
-      iconUrl: 'assets/img/arretBus.png',
-      iconRetinaUrl: 'assets/img/arretBus.png',
-      shadowUrl: 'assets/img/arretBus.png'
+      iconSize: [12, 18], iconAnchor: [7, 10],
+      iconUrl: 'assets/img/arretBus.png'
     }));
     this.stopIcons.push(L.icon({
-      iconSize: [12, 18],
-      iconAnchor: [7, 10],
-      iconUrl: 'assets/img/arretBusBleu.png',
-      iconRetinaUrl: 'assets/img/arretBusBleu.png',
-      shadowUrl: 'assets/img/arretBusBleu.png'
+      iconSize: [12, 18], iconAnchor: [7, 10],
+      iconUrl: 'assets/img/arretBusBleu.png'
     }));
 
     this.busIcons.push(L.icon({
-      iconSize: [18, 20],
-      iconAnchor: [0, 10],
-      iconUrl: 'assets/img/busVert_20.png',
-      iconRetinaUrl: 'assets/img/busVert_20.png',
-      shadowUrl: 'assets/img/busVert_20.png'
+      iconSize: [18, 40], iconAnchor: [9, 10],
+      iconUrl: 'assets/img/busVert_20.png'
     }));
-    
+    this.busIcons.push(L.icon({
+      iconSize: [18, 20], iconAnchor: [0, 10],
+      iconUrl: 'assets/img/busReseaux.png'
+    }));
+    this.busIcons.push(L.icon({
+      iconSize: [18, 20], iconAnchor: [0, 10],
+      iconUrl: 'assets/img/busReseauxRt.png'
+    }));
 
     this.myMap = L.map('busMap').setView([this.lat, this.lng], this.zoom);
 
@@ -119,58 +146,95 @@ export class MapComponent implements OnInit {
     }).addTo(this.myMap);
 
     this.myMap.on("zoom", (e: any) => {
-      this.zoom = this.myMap.getZoom();
-      this.onMapMove(this.myMap.getCenter());
-      this.clientHeight = this.myMap.getBounds().getNorth() - this.myMap.getBounds().getSouth();
-      this.clientWidth = this.myMap.getBounds().getEast() - this.myMap.getBounds().getWest();
-
-      for (const [key, value] of this.mapMarker) {
-        value[0].forEach((marker: L.Marker) => {
-          marker.setIcon(this.stopIcons[this.getIcone(false)]);
-        });
-      }
+      this.onMapZoom(e)
     });
 
     this.myMap.on("drag", (e: any) => {
       this.onMapMove(this.myMap.getCenter());
     });
 
-    this.clientHeight = this.myMap.getBounds().getSouth();
-    this.clientWidth = this.myMap.getBounds().getWest();
-
-    //this.addMarker(this.myMap.getBounds().getSouth(), this.myMap.getBounds().getWest());
-
     this._stopsService.getDescriptionReseaux$().subscribe({
       next: (lstDescReseau: DescReseau[]) => {
+        this.nbReseaux = lstDescReseau.length;
         lstDescReseau.forEach(descReseau => {
-          console.log(descReseau.center[0] + " " + descReseau.center[1]);
-          L.marker([descReseau.center[0], descReseau.center[1]], {
-            icon: (this.stopIcons[2])
-          })
-          .bindPopup(descReseau.title)
-          .addTo(this.myMap);
+          //console.log("descReseau.center: " + descReseau.center[0] + " " + descReseau.center[1]);
+          this.mapDescReseau.set(descReseau.id, descReseau);
+          if (descReseau.center[0]) {
+            L.marker([descReseau.center[0], descReseau.center[1]], {
+              icon: (this.busIcons[(descReseau.rt?"2":"1")])
+            })
+              .bindPopup(descReseau.title)
+              .addTo(this.myMap);
+          }
         })
       }
     });
+
+    this._lstReseauxObservableService.lstReseauxAffiche$.subscribe((id:string)=>{
+      this.switchReseaux(id);
+    })
+  }
+
+  switchReseaux(id:string){
+
+    if (this.mapLine.get(id)){
+      this.mapLine.get(id).forEach((line: L.Polyline) => {
+        line.remove();
+      });
+      this.mapLine.delete(id);
+    }
   }
 
   addVehicles(id: string) {
     if (this.zoom > 10) {
+      //console.log("addVehicles: " + id);
       if (!this.mapCacheVehicles.get(id)) {//on evite de recharger les memes vehicules
-        this.mapCacheVehicles.set(id, true);
+        this.mapCacheVehicles.set(id, []);
+        console.log("lance: " + id);
+        this.relance(id);
+      }
+    } else {
 
-        this._stopsService.getRealtimeVehiclesByIdReseaux$(id).subscribe({
-          next: (lstVehicles: realTimesVehicles[]) => {
-            console.log("nbBus : " + lstVehicles.length);
-            lstVehicles.forEach(vehicle =>{
+    }
+  }
+
+  addCheckBox(id: string) {
+    if (this.zoom > 10) {
+      if (!this.mapCheckBoxDescReseau.get(id)){
+        this.mapCheckBoxDescReseau.set(id, this.mapDescReseau.get(id));
+        this._lstReseauxObservableService.lstReseaux = Array.from(this.mapCheckBoxDescReseau.values());
+
+      }
+    }
+  }
+
+  loadVehicles(id: string) {
+    this.mapCacheVehicles.get(id).forEach(
+      (vehicle: L.Marker) => {
+        vehicle.remove();
+      });
+
+    this._stopsService.getRealtimeVehiclesByIdReseaux$(id).subscribe({
+      next: (lstVehicles: realTimesVehicles[]) => {
+        lstVehicles.forEach(vehicle => {
+          //if (this.mapCacheVehicles.get(id)){
+            this.mapCacheVehicles.get(id).push(
               L.marker([vehicle.coord[0], vehicle.coord[1]], {
+                rotationAngle: vehicle.bearing,
                 icon: (this.busIcons[0])
-              })
-              .addTo(this.myMap);
-            });
-          }
+              }).bindPopup("id: " + vehicle.id  + ", bearing:" + vehicle.bearing).addTo(this.myMap));
         });
       }
+    });
+  }
+
+  relance(id: string) {
+    if (this.mapCacheVehicles.get(id)){
+      console.log("relance: " + id);
+      this.loadVehicles(id);
+      setTimeout(() => {
+        this.relance(id);
+      }, 60000);
     }
   }
 
@@ -184,17 +248,15 @@ export class MapComponent implements OnInit {
         this._stopsService.getStopsByIdPositionTrajet$(idPosition)
           .subscribe({
             next: (lstTrajet: Trajet[]) => {
-              
-              if (lstTrajet && lstTrajet[0]){
-                this.addVehicles(lstTrajet[0].id);
-              }
-             
               lstTrajet.forEach(trajet => {
-
-                if (!this.mapMarker.get(trajet.route_id)) {
-                  this.mapMarker.set(trajet.route_id, [[], []]);
+                let idMarker = trajet.id + "_" + trajet.route_id;
+                this.addVehicles(trajet.id);
+                this.addCheckBox(trajet.id);
+                
+                if (!this.mapMarker.get(idMarker)) {
+                  this.mapMarker.set(idMarker, [[], []]);
                   trajet.stops.forEach(stop => {
-                    this.mapMarker.get(trajet.route_id)[0].push(
+                    this.mapMarker.get(idMarker)[0].push(
                       L.marker([stop.stop_lat, stop.stop_lon], {
                         icon: (this.stopIcons[this.getIcone(false)])
                       })
@@ -203,62 +265,67 @@ export class MapComponent implements OnInit {
                           this.markSelected = stop.stop_id;
                         })
                         .addEventListener("mouseover", (line) => {
-                          this.mapMarker.get(trajet.route_id)[0].forEach((marker: L.Marker) => {
+                          this.mapMarker.get(idMarker)[0].forEach((marker: L.Marker) => {
                             marker.setIcon(this.stopIcons[this.getIcone(true)]);
                             marker.setZIndexOffset(150);
                           });
                         })
                         .addEventListener("mouseout", (line) => {
-                          this.mapMarker.get(trajet.route_id)[0].forEach((marker: L.Marker) => {
+                          this.mapMarker.get(idMarker)[0].forEach((marker: L.Marker) => {
                             marker.setIcon(this.stopIcons[this.getIcone(false)]);
                             marker.setZIndexOffset(100);
                           });
                         })
-                        
                         .addTo(this.myMap));
 
-                    if (trajet.shapes.length == 0) {
-                      this.mapMarker.get(trajet.route_id)[1].push(
+                    /*if (trajet.shapes.length == 0) {
+                      this.mapMarker.get(idMarker)[1].push(
                         L.latLng(stop.stop_lat, stop.stop_lon));
-                    }
+                    }*/
                   });
 
                   if (trajet.shapes.length != 0) {
                     for (let i = 0; i < trajet.shapes.length; i = i + 2) {
-                      this.mapMarker.get(trajet.route_id)[1].push(
+                      this.mapMarker.get(idMarker)[1].push(
                         L.latLng(trajet.shapes[i], trajet.shapes[i + 1]));
                     }
                   }
 
-                  //console.log(trajet.route_color + " " + stopTrajet.length);  
-                  L.polyline(this.mapMarker.get(trajet.route_id)[1], {
-                    color: "#" + trajet.route_color,
-                    weight: 2
-                  })
-                    .bindPopup(trajet.route_long_name)
-                    .addEventListener("click", (line) => {
-                      this.mapMarker.get(trajet.route_id)[0].forEach((marker: L.Marker) => {
-                        marker.setIcon(this.stopIcons[this.getIcone(true)]);
-                        marker.setZIndexOffset(150);
-                      });
 
-                      line.target.bringToFront();
+                  if (!this.mapLine.get(trajet.id)) {
+                    this.mapLine.set(trajet.id, []);
+                  }
+
+                    this.mapLine.get(trajet.id).push(
+                    L.polyline(this.mapMarker.get(idMarker)[1], {
+                      color: "#" + trajet.route_color,
+                      weight: 2
                     })
-                    .addEventListener("mouseover", (line) => {
-                      this.mapMarker.get(trajet.route_id)[0].forEach((marker: L.Marker) => {
-                        marker.setIcon(this.stopIcons[this.getIcone(true)]);
-                        marker.setZIndexOffset(150);
-                      });
+                      .bindPopup("id: " + trajet.id + "<br>" + trajet.route_long_name)
+                      .addEventListener("click", (line) => {
+                        this.mapMarker.get(idMarker)[0].forEach((marker: L.Marker) => {
+                          marker.setIcon(this.stopIcons[this.getIcone(true)]);
+                          marker.setZIndexOffset(150);
+                        });
 
-                      line.target.bringToFront();
-                    }).addEventListener("mouseout", (line) => {
-                      this.mapMarker.get(trajet.route_id)[0].forEach((marker: L.Marker) => {
-                        marker.setIcon(this.stopIcons[this.getIcone(false)]);
-                        marker.setZIndexOffset(100);
-                      });
-                    })
-                    .addTo(this.myMap);
+                        line.target.bringToFront();
+                      })
+                      .addEventListener("mouseover", (line) => {
+                        this.mapMarker.get(idMarker)[0].forEach((marker: L.Marker) => {
+                          marker.setIcon(this.stopIcons[this.getIcone(true)]);
+                          marker.setZIndexOffset(150);
+                        });
 
+                        line.target.bringToFront();
+                      }).addEventListener("mouseout", (line) => {
+                        this.mapMarker.get(idMarker)[0].forEach((marker: L.Marker) => {
+                          marker.setIcon(this.stopIcons[this.getIcone(false)]);
+                          marker.setZIndexOffset(100);
+                        });
+                      })
+                      .addTo(this.myMap)
+                    )
+                  
                 }
               });
               console.log("load : " + idPosition + ", nb stop:" + lstTrajet.length);
@@ -274,7 +341,7 @@ export class MapComponent implements OnInit {
     if (this.zoom <= 11)
       return 0;
 
-    if (this.zoom >= 12 && this.zoom <= 13) {
+    if (this.zoom >= 12 && this.zoom <= 14) {
       if (isOver)
         return 3;
       else
@@ -288,6 +355,10 @@ export class MapComponent implements OnInit {
 
   }
 
+  /**
+   * 
+   * @param lieu Met à jour l'emplacement de la carte en focntion des criteres de recherche de l'utilisateur
+   */
   getAddress(lieu: any) {
     this.lat = lieu.lat;
     this.lng = lieu.lon;

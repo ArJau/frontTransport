@@ -1,0 +1,5 @@
+
+<div *ngFor="let reseau of lstCheckBoxDescReseau; let i=index">
+    <input type="checkbox" checked [value]="reseau.id" (change)="onCheckboxChange(reseau, $event)"/>
+    {{ reseau.title}}{{ reseau.name?", " + reseau.name:""}}
+  </div>

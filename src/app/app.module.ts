@@ -17,6 +17,7 @@ import { LoginComponent } from './component/login/login.component';
 import { RouterModule, Routes } from '@angular/router';
 import { RechercheLieuComponent } from './component/recherche-lieu/recherche-lieu.component';
 import { DetailStopComponent } from './component/detail-stop/detail-stop.component';
+import { FiltreReseauxComponent } from './component/filtre-reseaux/filtre-reseaux.component';
 
 
 
@@ -33,7 +34,8 @@ import { DetailStopComponent } from './component/detail-stop/detail-stop.compone
     BoardUserComponent,
     AppComponent,
     RechercheLieuComponent,
-    DetailStopComponent
+    DetailStopComponent,
+    FiltreReseauxComponent
   ],
   imports: [
     BrowserModule,
