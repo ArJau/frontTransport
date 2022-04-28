@@ -28,6 +28,15 @@ export class StopsService {
     return this._http.get<Trajet[]>(url)
   }
 
+  public getStopsByIdPositionIdReseauTrajet$(idPosition: string, idReseau:string): Observable<Trajet[]> {
+    const params = new HttpParams()
+      .set('idPosition', idPosition)
+      .set('idReseau', idReseau);
+    let url = this.DATA_API + `/public/lstStopsTrajetIdPositionIdReseau?${params.toString()}`;
+    console.log("url = " + url);
+    return this._http.get<Trajet[]>(url)
+  }
+
   public getRealtimeVehiclesByIdReseaux$(idReseau: string): Observable<realTimesVehicles[]> {
     let url = this.DATA_API + `/public/realtimesvehicles/${idReseau}`;
     console.log("url = " + url);

@@ -4,6 +4,7 @@ import { StopsService } from 'src/_service/stops.service';
 import { DescReseau, realTimesVehicles, Trajet } from 'src/app/data/trajets';
 import 'leaflet-rotatedmarker';
 import { LstReseauxObservableService } from 'src/_service/lst-reseaux-observable.service';
+import { Stop } from 'src/app/data/stops';
 
 
 @Component({
@@ -37,6 +38,10 @@ export class MapComponent implements OnInit {
   public mapCacheVehicles = new Map();
   public mapDescReseau = new Map();
   public mapCheckBoxDescReseau = new Map();
+
+  public mapIdPositionIdReseau = new Map();
+  public mapIdReseauIdPosition = new Map();
+  public mapIdReseauIdRoute = new Map();
 
   constructor(private _stopsService: StopsService, 
     private _lstReseauxObservableService: LstReseauxObservableService) {
@@ -101,7 +106,7 @@ export class MapComponent implements OnInit {
   onMapMove(e: any) {
     this.lat = e.lat;
     this.lng = e.lng;
-    this.addMarker(this.myMap.getBounds().getSouth(), this.myMap.getBounds().getWest());
+    this.addMarker2(this.myMap.getBounds().getSouth(), this.myMap.getBounds().getWest());
     this.calculTuileEcran();
   }
 
@@ -166,9 +171,25 @@ export class MapComponent implements OnInit {
               .bindPopup(descReseau.title)
               .addTo(this.myMap);
           }
+
+          //création de map
+          if (!this.mapIdReseauIdPosition.get(descReseau.id)){
+            this.mapIdReseauIdPosition.set(descReseau.id, new Map());
+          }
+
+          for(let i in descReseau.idPosition){
+            let pos = JSON.parse(JSON.stringify(descReseau.idPosition[i])).pos;
+            if (!this.mapIdPositionIdReseau.get(pos)){
+              this.mapIdPositionIdReseau.set(pos, new Map());
+            }
+            this.mapIdPositionIdReseau.get(pos).set(descReseau.id, false);
+            this.mapIdReseauIdPosition.get(descReseau.id).set(pos);
+          }
+
         })
       }
     });
+
 
     this._lstReseauxObservableService.lstReseauxAffiche$.subscribe((id:string)=>{
       this.switchReseaux(id);
@@ -176,7 +197,6 @@ export class MapComponent implements OnInit {
   }
 
   switchReseaux(id:string){
-
     if (this.mapLine.get(id)){
       this.mapLine.get(id).forEach((line: L.Polyline) => {
         line.remove();
@@ -256,27 +276,26 @@ export class MapComponent implements OnInit {
                 if (!this.mapMarker.get(idMarker)) {
                   this.mapMarker.set(idMarker, [[], []]);
                   trajet.stops.forEach(stop => {
-                    this.mapMarker.get(idMarker)[0].push(
-                      L.marker([stop.stop_lat, stop.stop_lon], {
-                        icon: (this.stopIcons[this.getIcone(false)])
+                    this.mapMarker.get(idMarker)[0].push(L.marker([stop.stop_lat, stop.stop_lon], {
+                      icon: (this.stopIcons[this.getIcone(false)])
+                    })
+                      .bindPopup("id: " + trajet.id + "<br>" + stop.stop_name + "<br>" + " lat: " + stop.stop_lat + " lon: " + stop.stop_lon)
+                      .addEventListener("click", (marker) => {
+                        this.markSelected = stop.stop_id;
                       })
-                        .bindPopup("id: " + trajet.id + "<br>" + stop.stop_name + "<br>" + " lat: " + stop.stop_lat + " lon: " + stop.stop_lon)
-                        .addEventListener("click", (marker) => {
-                          this.markSelected = stop.stop_id;
-                        })
-                        .addEventListener("mouseover", (line) => {
-                          this.mapMarker.get(idMarker)[0].forEach((marker: L.Marker) => {
-                            marker.setIcon(this.stopIcons[this.getIcone(true)]);
-                            marker.setZIndexOffset(150);
-                          });
-                        })
-                        .addEventListener("mouseout", (line) => {
-                          this.mapMarker.get(idMarker)[0].forEach((marker: L.Marker) => {
-                            marker.setIcon(this.stopIcons[this.getIcone(false)]);
-                            marker.setZIndexOffset(100);
-                          });
-                        })
-                        .addTo(this.myMap));
+                      .addEventListener("mouseover", (line) => {
+                        this.mapMarker.get(idMarker)[0].forEach((marker: L.Marker) => {
+                          marker.setIcon(this.stopIcons[this.getIcone(true)]);
+                          marker.setZIndexOffset(150);
+                        });
+                      })
+                      .addEventListener("mouseout", (line) => {
+                        this.mapMarker.get(idMarker)[0].forEach((marker: L.Marker) => {
+                          marker.setIcon(this.stopIcons[this.getIcone(false)]);
+                          marker.setZIndexOffset(100);
+                        });
+                      })
+                      .addTo(this.myMap));
 
                     /*if (trajet.shapes.length == 0) {
                       this.mapMarker.get(idMarker)[1].push(
@@ -290,7 +309,6 @@ export class MapComponent implements OnInit {
                         L.latLng(trajet.shapes[i], trajet.shapes[i + 1]));
                     }
                   }
-
 
                   if (!this.mapLine.get(trajet.id)) {
                     this.mapLine.set(trajet.id, []);
@@ -335,6 +353,107 @@ export class MapComponent implements OnInit {
 
       }
     }
+  }
+
+  /**EN TEST */
+  addMarker2(lat: number, lng: number) {
+    if (this.zoom > 10) {
+      let idPosition = this.calculIdPosition(lat, lng);
+
+      let mapIdPosition = this.mapIdPositionIdReseau.get(idPosition);
+      for (const [idReseau, isPresent] of mapIdPosition) { 
+        if (!isPresent) {//on regarde si le reseau a déjà été telechargé
+          this._stopsService.getStopsByIdPositionIdReseauTrajet$(idPosition, idReseau).subscribe({
+            next: (lstTrajet: Trajet[]) => {
+              lstTrajet.forEach(trajet => {
+                if (!this.mapIdReseauIdRoute.get(idReseau)) {
+                  this.mapIdReseauIdRoute.set(idReseau, new Map());
+                }
+                if (!this.mapIdReseauIdRoute.get(idReseau).get(trajet.route_id)){
+                  this.mapIdReseauIdRoute.get(idReseau).set(trajet.route_id, [[], []]);
+                  trajet.stops.forEach(stop => {
+                    
+                    this.mapIdReseauIdRoute.get(idReseau).get(trajet.route_id)[0].push(this.marker(stop, trajet));
+                    
+                    /*if (trajet.shapes.length == 0) {
+                      this.mapMarker.get(idMarker)[1].push(
+                        L.latLng(stop.stop_lat, stop.stop_lon));
+                    }*/
+                  });
+
+                  if (trajet.shapes.length != 0) {
+                    for (let i = 0; i < trajet.shapes.length; i = i + 2) {
+                      this.mapIdReseauIdRoute.get(idReseau).get(trajet.route_id)[1].push(
+                        L.latLng(trajet.shapes[i], trajet.shapes[i + 1]));
+                    }
+                  }
+
+                  L.polyline(this.mapIdReseauIdRoute.get(idReseau).get(trajet.route_id)[1], {
+                    color: "#" + trajet.route_color,
+                    weight: 2
+                  })
+                    .bindPopup("id: " + trajet.id + "<br>" + trajet.route_long_name)
+                    .addEventListener("click", (line) => {
+                      this.mapIdReseauIdRoute.get(idReseau).get(trajet.route_id)[0].forEach((marker: L.Marker) => {
+                        marker.setIcon(this.stopIcons[this.getIcone(true)]);
+                        marker.setZIndexOffset(150);
+                      });
+
+                      line.target.bringToFront();
+                    })
+                    .addEventListener("mouseover", (line) => {
+                      this.mapIdReseauIdRoute.get(idReseau).get(trajet.route_id)[0].forEach((marker: L.Marker) => {
+                        marker.setIcon(this.stopIcons[this.getIcone(true)]);
+                        marker.setZIndexOffset(150);
+                      });
+
+                      line.target.bringToFront();
+                    }).addEventListener("mouseout", (line) => {
+                      this.mapIdReseauIdRoute.get(idReseau).get(trajet.route_id)[0].forEach((marker: L.Marker) => {
+                        marker.setIcon(this.stopIcons[this.getIcone(false)]);
+                        marker.setZIndexOffset(100);
+                      });
+                    })
+                    .addTo(this.myMap);
+                }
+              })
+            },
+            error: (err) => { console.log("error:" + err) }
+          });
+          console.log(mapIdPosition);
+          mapIdPosition.set(idReseau, true);
+        }
+      }
+    }
+  }
+
+  
+
+  marker(stop:any, trajet:any){
+    L.marker([stop.stop_lat, stop.stop_lon], {
+      icon: (this.stopIcons[this.getIcone(false)])
+    })
+      .bindPopup("id: " + trajet.id + "<br>" + stop.stop_name + "<br>" + " lat: " + stop.stop_lat + " lon: " + stop.stop_lon)
+      .addEventListener("click", (marker) => {
+        this.markSelected = stop.stop_id;
+      })
+      .addEventListener("mouseover", () => {
+        this.mapIdReseauIdRoute.get(trajet.id).get(trajet.route_id).forEach((marker: L.Marker) => {
+          marker.setIcon(this.stopIcons[this.getIcone(true)]);
+          marker.setZIndexOffset(150);
+        });
+      })
+      .addEventListener("mouseout", () => {
+        this.mapIdReseauIdRoute.get(trajet.id).get(trajet.route_id).forEach((marker: L.Marker) => {
+          marker.setIcon(this.stopIcons[this.getIcone(false)]);
+          marker.setZIndexOffset(100);
+        });
+      })
+      .addTo(this.myMap)
+  }
+
+  supprimerReseau(id:string){
+
   }
 
   getIcone(isOver: boolean): number {
