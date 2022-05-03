@@ -7,15 +7,17 @@ import { DescReseau } from 'src/app/data/trajets';
 })
 export class LstReseauxObservableService {
 
-  private _lstReseaux$ : BehaviorSubject<DescReseau[]>;
+  /*private _lstReseaux$ : BehaviorSubject<DescReseau[]>;
+  private _lstReseauxAffiche$ : BehaviorSubject<DescReseau>;*/
 
-  private _lstReseauxAffiche$ : BehaviorSubject<string>;
+  private _lstReseaux$ : BehaviorSubject<DescReseau[]>;
+  private _lstReseauxAffiche$ : BehaviorSubject<DescReseau>;
 
   constructor() {
-    let vide : DescReseau[] = [];
-    this._lstReseaux$ = new BehaviorSubject<DescReseau[]>(vide);
-    //let vide2 : DescReseau[] = [];
-    this._lstReseauxAffiche$ = new BehaviorSubject<string>("");
+    let descReseau : DescReseau[] = [];
+    this._lstReseaux$ = new BehaviorSubject<DescReseau[]>(descReseau);
+    let vide2 : DescReseau = new DescReseau("","","","",false,0,[],[],[],true);
+    this._lstReseauxAffiche$ = new BehaviorSubject<DescReseau>(vide2);
    }
 
   public get lstReseaux$(){
@@ -30,7 +32,7 @@ export class LstReseauxObservableService {
     return this._lstReseauxAffiche$;
   }
 
-  public set lstReseauxAffiche(lstReseau: string){
+  public set lstReseauxAffiche(lstReseau: DescReseau){
     this._lstReseauxAffiche$.next(lstReseau);
   }
 

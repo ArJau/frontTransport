@@ -24,9 +24,10 @@ export class FiltreReseauxComponent implements OnInit {
 
   onCheckboxChange(reseau:DescReseau, event:Event){
     const ischecked = (<HTMLInputElement>event.target).checked;
+    reseau.display = ischecked;
     //if (ischecked){
       console.log(reseau);
-      this._lstReseauxObservableService.lstReseauxAffiche=reseau.id;
+      this._lstReseauxObservableService.lstReseauxAffiche=reseau;
     //}
   }
 

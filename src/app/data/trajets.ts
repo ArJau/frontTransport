@@ -37,7 +37,8 @@ export class DescReseau {
         public nbRoutes: number = 0,
         public center: number[],
         public idPosition: number[],
-        public coord: number[]
+        public coord: number[],
+        public display: boolean=true
     ) { }
 };
 
