@@ -35,11 +35,28 @@ export class DescReseau {
         public url: string = "",
         public rt: boolean = false,
         public nbRoutes: number = 0,
-        public center: number[],
-        public idPosition: number[],
-        public coord: number[],
-        public display: boolean=true
+        public center: number[] = [],
+        public idPosition: number[]= [],
+        public coord: number[]= [],
+        public display: boolean=true,
+        public zoom: number = 10,
     ) { }
+};
+
+export class Favori {
+    constructor(
+        public noReseauId: string = "",
+        public reseauId: string = "",
+        public routeId: string = "",
+        public stopId: string = "",
+        public user: User = new User,
+    ) { }
+};
+
+export class User {
+    constructor(
+        public id: string = ""
+    ) {}
 };
 
 

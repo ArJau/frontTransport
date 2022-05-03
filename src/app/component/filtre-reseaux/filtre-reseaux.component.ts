@@ -1,6 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { DescReseau } from 'src/app/data/trajets';
+import { DescReseau, Favori } from 'src/app/data/trajets';
 import { LstReseauxObservableService } from 'src/_service/lst-reseaux-observable.service';
+import { UserService } from 'src/_service/user.service';
 
 @Component({
   selector: 'app-filtre-reseaux',
@@ -11,24 +12,41 @@ export class FiltreReseauxComponent implements OnInit {
 
   public lstCheckBoxDescReseau: DescReseau[] = [];
 
-  constructor(private _lstReseauxObservableService: LstReseauxObservableService) {}
+  constructor(private _lstReseauxObservableService: LstReseauxObservableService, private _userService: UserService) {}
 
     //private _filtreReseauxComponent: FiltreReseauxComponent
   ngOnInit(): void {
    this._lstReseauxObservableService.lstReseaux$.subscribe((lstReseau:DescReseau[])=>{
     this.lstCheckBoxDescReseau = lstReseau;
-   }
-
-   )
+   })
   }
 
   onCheckboxChange(reseau:DescReseau, event:Event){
-    const ischecked = (<HTMLInputElement>event.target).checked;
-    reseau.display = ischecked;
-    //if (ischecked){
-      console.log(reseau);
-      this._lstReseauxObservableService.lstReseauxAffiche=reseau;
-    //}
-  }
+    const isChecked = (<HTMLInputElement>event.target).checked;
+    reseau.display = isChecked;
+    this._lstReseauxObservableService.lstReseauxAffiche=reseau;
+    let favori = new Favori(reseau.id);
+    if (isChecked){
+      this._userService.deleleteFavoris(favori).subscribe({
+        next: data => {
+          console.log(data);
+      },
+      error: error => {
+          console.error('There was an error!', error);
+      }
 
+      });
+    }else{
+      this._userService.saveFavoris(favori).subscribe({
+        next: data => {
+          console.log(data);
+      },
+      error: error => {
+          console.error('There was an error!', error);
+      }
+
+      });
+    }
+
+  }
 }

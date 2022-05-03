@@ -16,8 +16,8 @@ export class LstReseauxObservableService {
   constructor() {
     let descReseau : DescReseau[] = [];
     this._lstReseaux$ = new BehaviorSubject<DescReseau[]>(descReseau);
-    let vide2 : DescReseau = new DescReseau("","","","",false,0,[],[],[],true);
-    this._lstReseauxAffiche$ = new BehaviorSubject<DescReseau>(vide2);
+    let descReseau2 : DescReseau = new DescReseau();
+    this._lstReseauxAffiche$ = new BehaviorSubject<DescReseau>(descReseau2);
    }
 
   public get lstReseaux$(){

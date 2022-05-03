@@ -1,10 +1,11 @@
 import { Component, ElementRef, EventEmitter, OnInit, Output, ViewChild } from '@angular/core';
 import * as L from 'leaflet';
 import { StopsService } from 'src/_service/stops.service';
-import { DescReseau, realTimesVehicles, Trajet } from 'src/app/data/trajets';
+import { DescReseau, Favori, realTimesVehicles, Trajet } from 'src/app/data/trajets';
 import 'leaflet-rotatedmarker';
 import { LstReseauxObservableService } from 'src/_service/lst-reseaux-observable.service';
 import { Stop } from 'src/app/data/stops';
+import { UserService } from 'src/_service/user.service';
 
 
 @Component({
@@ -44,7 +45,8 @@ export class MapComponent implements OnInit {
   public mapIdReseauIdRoute = new Map();
 
   constructor(private _stopsService: StopsService,
-    private _lstReseauxObservableService: LstReseauxObservableService) {
+    private _lstReseauxObservableService: LstReseauxObservableService,
+    private _userService: UserService) {
   }
 
   calculIdPosition(lat: number, lon: number) {
@@ -84,24 +86,25 @@ export class MapComponent implements OnInit {
       }
     }
 
-    if (this.zoom <= 10) {//en dessous de 11 on supprime tout
-console.log("toto");
+    if (this.zoom <= 10) {
       for (const [idPosition, position] of this.mapIdPositionIdReseau) {
         for (const [idReseau, reseau] of position) {
-          if (reseau == "true") {
-            this.mapIdPositionIdReseau.get(idPosition).set(idReseau, "false");
-            for (const [idRoute, route] of this.mapIdReseauIdRoute.get(idReseau)) {
-              if (route) {
-                route[2].forEach((line: L.Polyline) => {
-                  line.remove();
-                });
-                route[0].forEach((marker: L.Marker) => {
-                  marker.remove();
-                });
+          if (this.zoom < this.mapDescReseau.get(idReseau).zoom) {
+            if (reseau == "true") {
+              this.mapIdPositionIdReseau.get(idPosition).set(idReseau, "false");
+              for (const [idRoute, route] of this.mapIdReseauIdRoute.get(idReseau)) {
+                if (route) {
+                  route[2].forEach((line: L.Polyline) => {
+                    line.remove();
+                  });
+                  route[0].forEach((marker: L.Marker) => {
+                    marker.remove();
+                  });
+                }
               }
-            }
-            this.mapIdReseauIdRoute.set(idReseau, new Map());
+              this.mapIdReseauIdRoute.set(idReseau, new Map());
 
+            }
           }
         }
       }
@@ -168,39 +171,70 @@ console.log("toto");
       this.onMapMove(this.myMap.getCenter());
     });
 
-    this._stopsService.getDescriptionReseaux$().subscribe({
-      next: (lstDescReseau: DescReseau[]) => {
-        this.nbReseaux = lstDescReseau.length;
-        lstDescReseau.forEach(descReseau => {
-          //console.log("descReseau.center: " + descReseau.center[0] + " " + descReseau.center[1]);
-          descReseau.display = true;
-          this.mapDescReseau.set(descReseau.id, descReseau);
-          if (descReseau.center[0]) {
-            L.marker([descReseau.center[0], descReseau.center[1]], {
-              icon: (this.busIcons[(descReseau.rt ? "2" : "1")])
-            })
-            .bindPopup(descReseau.title)
-            .addTo(this.myMap);
+    let maplstNoReseauFavori = new Map();
+    this._userService.getFavoris().subscribe({
+      next: (lstFavori: Favori[]) => {
+        
+        for (let i in lstFavori) {
+          if (lstFavori[i].noReseauId) {
+            maplstNoReseauFavori.set(lstFavori[i].noReseauId, true);
           }
+        }
 
-          //création de map
-          if (!this.mapIdReseauIdPosition.get(descReseau.id)) {
-            this.mapIdReseauIdPosition.set(descReseau.id, []);
+
+        this._stopsService.getDescriptionReseaux$().subscribe({
+          next: (lstDescReseau: DescReseau[]) => {
+            this.nbReseaux = lstDescReseau.length;
+            lstDescReseau.forEach(descReseau => {
+              //console.log("descReseau.center: " + descReseau.center[0] + " " + descReseau.center[1]);
+              descReseau.display = maplstNoReseauFavori.get(descReseau.id) ? false : true;
+              let zoom = Math.ceil(descReseau.coord[2] - descReseau.coord[0]);
+              if (!zoom)
+                descReseau.zoom = 0;
+              else if (zoom <= 2)
+                descReseau.zoom = 10;
+              else if (zoom <= 4)
+                descReseau.zoom = 9;
+              else if (zoom <= 6)
+                descReseau.zoom = 8;
+              else
+                descReseau.zoom = 6;
+
+              //console.log(zoom + " -> " + descReseau.zoom + "  : " + descReseau.id + " : " + descReseau.title + ", " +  descReseau.name + ": "+   descReseau.coord);
+
+              this.mapDescReseau.set(descReseau.id, descReseau);
+              if (descReseau.center[0]) {
+                L.marker([descReseau.center[0], descReseau.center[1]], {
+                  icon: (this.busIcons[(descReseau.rt ? "2" : "1")])
+                })
+                  .bindPopup(descReseau.title)
+                  .addTo(this.myMap);
+              }
+
+              //création de map
+              if (!this.mapIdReseauIdPosition.get(descReseau.id)) {
+                this.mapIdReseauIdPosition.set(descReseau.id, []);
+              }
+              let lstPos = [];
+              let pos;
+              for (let i in descReseau.idPosition) {
+                pos = JSON.parse(JSON.stringify(descReseau.idPosition[i])).pos;
+                lstPos.push(pos);
+                if (!this.mapIdPositionIdReseau.get(pos)) {
+                  this.mapIdPositionIdReseau.set(pos, new Map());
+                }
+                this.mapIdPositionIdReseau.get(pos).set(descReseau.id, "false");
+              }
+              this.mapIdReseauIdPosition.set(descReseau.id, lstPos);
+            });
           }
-          let lstPos = [];
-          let pos;
-          for (let i in descReseau.idPosition) {
-            pos = JSON.parse(JSON.stringify(descReseau.idPosition[i])).pos;
-            lstPos.push(pos);
-            if (!this.mapIdPositionIdReseau.get(pos)) {
-              this.mapIdPositionIdReseau.set(pos, new Map());
-            }
-            this.mapIdPositionIdReseau.get(pos).set(descReseau.id, "false");
-          }
-          this.mapIdReseauIdPosition.set(descReseau.id, lstPos);
         });
+
+
       }
-    });
+    })
+    console.log(maplstNoReseauFavori);
+
 
     this._lstReseauxObservableService.lstReseauxAffiche$.subscribe((desc: DescReseau) => {
       this.afficherReseaux(desc);
@@ -256,15 +290,17 @@ console.log("toto");
    * @param tabId Ajoute les checkbox qui permet de filtrer l'affichage des reseaux
    */
   addCheckBox(tabId: string[]) {
-    if (this.zoom > 10) {
-      let tabReseauDescription = [];
-      for (let i in tabId) {
-        let id = tabId[i];
+    //if (this.zoom >= 10) {
+    let tabReseauDescription = [];
+    for (let i in tabId) {
+      let id = tabId[i];
+      if (this.zoom > this.mapDescReseau.get(id).zoom) {
         tabReseauDescription.push(this.mapDescReseau.get(id));
       }
-      console.log(tabReseauDescription);
-      this._lstReseauxObservableService.lstReseaux = tabReseauDescription;
     }
+    //console.log(tabReseauDescription);
+    this._lstReseauxObservableService.lstReseaux = tabReseauDescription;
+    //}
   }
 
   loadVehicles(id: string) {
@@ -314,8 +350,14 @@ console.log("toto");
     }
   }
 
+  /**
+   * 
+   * @param idPosition Affichage d'un réseaux à l'endroit ou se trouve l'utilisateur
+   * @param idReseau 
+   * @returns 
+   */
   addReseaux(idPosition: string, idReseau: string) {
-    if (this.mapDescReseau.get(idReseau).display == false)
+    if (this.mapDescReseau.get(idReseau).display == false)//si le réseaux n'est pas coché alors on ne l'affiche pas
       return;
     this.mapIdPositionIdReseau.get(idPosition).set(idReseau, "true");
     this._stopsService.getStopsByIdPositionIdReseauTrajet$(idPosition, idReseau).subscribe({
@@ -382,7 +424,12 @@ console.log("toto");
     });
   }
 
-
+  /**
+   * 
+   * @param stop Affichage d'un arret de bus (marker)
+   * @param trajet 
+   * @returns 
+   */
   marker(stop: any, trajet: any) {
     return L.marker([stop.stop_lat, stop.stop_lon], {
       icon: (this.stopIcons[this.getIcone(false)])
