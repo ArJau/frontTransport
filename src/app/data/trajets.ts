@@ -1,3 +1,5 @@
+import { Stop } from "./stops";
+
 export class Trajet {
     result: any;
     constructor(
@@ -6,15 +8,9 @@ export class Trajet {
         public route_text_color: string = "",
         public route_color: string = "",
         public route_long_name: string = "",
+        public route_short_name: string = "",
         public idPosition: [],
-        public stops: [{
-            id: string,
-            stop_name: string,
-            stop_id: string,
-            stop_lat: number,
-            stop_lon: number,
-            idPosition: string
-        }],
+        public stops: Stop[] = [],
         public shapes: []
     ) {
     }
@@ -31,6 +27,7 @@ export class DescReseau {
     constructor(
         public title: string = "",
         public name: string = "",
+        public agency_name: string = "",
         public id: string = "",
         public url: string = "",
         public rt: boolean = false,
@@ -40,6 +37,15 @@ export class DescReseau {
         public coord: number[]= [],
         public display: boolean=true,
         public zoom: number = 10,
+        public agence: Agence[] = [],
+    ) { }
+};
+
+export class Agence {
+    constructor(
+        public url: string = "",
+        public tel: string = "",
+        public agency_name: string = ""
     ) { }
 };
 

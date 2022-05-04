@@ -49,4 +49,10 @@ export class FiltreReseauxComponent implements OnInit {
     }
 
   }
+
+  afficheAgence(reseau:DescReseau) :string{
+    if (reseau.agence && reseau.agence[0])
+      return reseau.agence[0].url;
+    return ""
+  }
 }

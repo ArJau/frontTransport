@@ -14,11 +14,6 @@ import { UserService } from 'src/_service/user.service';
   styleUrls: ['./map.component.scss']
 })
 export class MapComponent implements OnInit {
-  //public lng:any=1.390962;//pinsaguel
-  //public lat:any=43.506453;
-
-  //public lng:any=-4.481778; brest
-  //public lat:any=48.399633;
   public lat: number = 46.7;
   public lng: number = 2.2; //centre
   public zoom: number = 6;
@@ -44,32 +39,15 @@ export class MapComponent implements OnInit {
   public mapIdReseauIdPosition = new Map();
   public mapIdReseauIdRoute = new Map();
 
+  
+  public tabColor = ["#641e16","#c0392b", "#633974", "#af7ac5", "#6c3483"
+  , "#5499c7", "#117864", "#1abc9c", "#27ae60", "#2ecc71", "#7d6608", 
+  "#d4ac0d", "#f7dc6f", "#b9770e", "#d68910", "#ba4a00", "#7b7d7d", 
+  "#aab7b8", "#17202a", "#566573", "#58d68d", "red", "blue", "yellow", "green", "pink", "orange"];
+
   constructor(private _stopsService: StopsService,
     private _lstReseauxObservableService: LstReseauxObservableService,
     private _userService: UserService) {
-  }
-
-  calculIdPosition(lat: number, lon: number) {
-    return this.calculEchelleVerticale(lat) + this.calculEchelleHorzontale(lon);
-  }
-
-  calculEchelleVerticale(lat: number) {
-    lat = Number(lat) + 90;//+90 pour n'avoir que des valeurs positives
-    return "" + (Math.floor(Math.floor(Math.floor(lat * this.pVerti[1]) / this.pVerti[0])) * this.pVerti[0]);
-  }
-  calculEchelleHorzontale(lon: number) {
-    lon = Number(lon) + 180// +180 pour n'avoir que des valeurs positives
-    return "" + (Math.floor(Math.floor(Math.floor(lon * this.pHoriz[1]) / this.pHoriz[0])) * this.pHoriz[0]);
-  }
-
-  calculTuileEcran() {
-    let nord = Number(this.calculEchelleVerticale(this.myMap.getBounds().getNorth()));
-    let sud = Number(this.calculEchelleVerticale(this.myMap.getBounds().getSouth()));
-    //console.log("sud: " + sud + " nord: " + nord + ", nord-sud: " + (nord-sud));
-    let ouest = Number(this.calculEchelleHorzontale(this.myMap.getBounds().getWest()));
-    let est = Number(this.calculEchelleHorzontale(this.myMap.getBounds().getEast()));
-
-    //console.log("ouest: " + ouest + ", est: " + est + ", est-ouest: " + (est-ouest));
   }
 
   onMapZoom(e: any) {
@@ -188,9 +166,10 @@ export class MapComponent implements OnInit {
             lstDescReseau.forEach(descReseau => {
               //console.log("descReseau.center: " + descReseau.center[0] + " " + descReseau.center[1]);
               descReseau.display = maplstNoReseauFavori.get(descReseau.id) ? false : true;
+          
               let zoom = Math.ceil(descReseau.coord[2] - descReseau.coord[0]);
               if (!zoom)
-                descReseau.zoom = 0;
+                descReseau.zoom = 12;
               else if (zoom <= 2)
                 descReseau.zoom = 10;
               else if (zoom <= 4)
@@ -200,6 +179,7 @@ export class MapComponent implements OnInit {
               else
                 descReseau.zoom = 6;
 
+
               //console.log(zoom + " -> " + descReseau.zoom + "  : " + descReseau.id + " : " + descReseau.title + ", " +  descReseau.name + ": "+   descReseau.coord);
 
               this.mapDescReseau.set(descReseau.id, descReseau);
@@ -207,7 +187,7 @@ export class MapComponent implements OnInit {
                 L.marker([descReseau.center[0], descReseau.center[1]], {
                   icon: (this.busIcons[(descReseau.rt ? "2" : "1")])
                 })
-                  .bindPopup(descReseau.title)
+                  .bindPopup(descReseau.title  + (descReseau.name?"<br>" + descReseau.name:""))
                   .addTo(this.myMap);
               }
 
@@ -233,7 +213,6 @@ export class MapComponent implements OnInit {
 
       }
     })
-    console.log(maplstNoReseauFavori);
 
 
     this._lstReseauxObservableService.lstReseauxAffiche$.subscribe((desc: DescReseau) => {
@@ -241,6 +220,11 @@ export class MapComponent implements OnInit {
     })
   }
 
+  /**
+   * 
+   * @param desc Affiche ou suppime un reseaux de la carte
+   * @returns 
+   */
   afficherReseaux(desc: DescReseau) {
     if (!this.mapIdReseauIdPosition.get(desc.id)) {
       return;
@@ -298,7 +282,7 @@ export class MapComponent implements OnInit {
         tabReseauDescription.push(this.mapDescReseau.get(id));
       }
     }
-    //console.log(tabReseauDescription);
+    console.log(tabReseauDescription);
     this._lstReseauxObservableService.lstReseaux = tabReseauDescription;
     //}
   }
@@ -349,7 +333,6 @@ export class MapComponent implements OnInit {
       }
     }
   }
-
   /**
    * 
    * @param idPosition Affichage d'un réseaux à l'endroit ou se trouve l'utilisateur
@@ -359,6 +342,8 @@ export class MapComponent implements OnInit {
   addReseaux(idPosition: string, idReseau: string) {
     if (this.mapDescReseau.get(idReseau).display == false)//si le réseaux n'est pas coché alors on ne l'affiche pas
       return;
+
+    this.addVehicles(idReseau);
     this.mapIdPositionIdReseau.get(idPosition).set(idReseau, "true");
     this._stopsService.getStopsByIdPositionIdReseauTrajet$(idPosition, idReseau).subscribe({
       next: (lstTrajet: Trajet[]) => {
@@ -390,10 +375,15 @@ export class MapComponent implements OnInit {
             }
             this.mapIdReseauIdRoute.get(idReseau).get(trajet.route_id)[2].push(
               L.polyline(this.mapIdReseauIdRoute.get(idReseau).get(trajet.route_id)[1], {
-                color: "#" + trajet.route_color,
+                color: (trajet.route_color?("#" + trajet.route_color):this.tabColor[Math.floor(Math.random()*this.tabColor.length)]),
                 weight: 2
               })
-                .bindPopup("id: " + trajet.id + "<br>" + trajet.route_long_name)
+                .bindPopup(
+                  this.mapDescReseau.get(idReseau).title + 
+                  (this.mapDescReseau.get(idReseau).name?"<br>" + this.mapDescReseau.get(idReseau).name:"") + 
+                  "<br>Ligne: " + trajet.route_short_name + " (" + trajet.route_long_name + ")" +
+                  "<br>" + trajet.id
+                  )
                 .addEventListener("click", (line) => {
                   this.mapIdReseauIdRoute.get(idReseau).get(trajet.route_id)[0].forEach((marker: L.Marker) => {
                     marker.setIcon(this.stopIcons[this.getIcone(true)]);
@@ -430,11 +420,17 @@ export class MapComponent implements OnInit {
    * @param trajet 
    * @returns 
    */
-  marker(stop: any, trajet: any) {
+  marker(stop: Stop, trajet: Trajet) {
     return L.marker([stop.stop_lat, stop.stop_lon], {
       icon: (this.stopIcons[this.getIcone(false)])
     })
-      .bindPopup("id: " + trajet.id + "<br>" + stop.stop_name + "<br>" + " lat: " + stop.stop_lat + " lon: " + stop.stop_lon)
+      .bindPopup(
+        this.mapDescReseau.get(trajet.id).title + 
+        (this.mapDescReseau.get(trajet.id).name?"<br>" + this.mapDescReseau.get(trajet.id).name:"") + 
+        "<br> - Ligne: " + trajet.route_short_name + " (" + trajet.route_long_name + ")" +
+        "<br> - Arret: " + stop.stop_name + 
+        "<br>" + trajet.id
+      )
       .addEventListener("click", () => {
         this.markSelected = stop.stop_id;
       })
@@ -480,6 +476,29 @@ export class MapComponent implements OnInit {
     this.lng = lieu.lon;
     this.zoom = lieu.zoom;
     this.myMap.setView([this.lat, this.lng], this.zoom);
+  }
+
+  calculIdPosition(lat: number, lon: number) {
+    return this.calculEchelleVerticale(lat) + this.calculEchelleHorzontale(lon);
+  }
+
+  calculEchelleVerticale(lat: number) {
+    lat = Number(lat) + 90;//+90 pour n'avoir que des valeurs positives
+    return "" + (Math.floor(Math.floor(Math.floor(lat * this.pVerti[1]) / this.pVerti[0])) * this.pVerti[0]);
+  }
+  calculEchelleHorzontale(lon: number) {
+    lon = Number(lon) + 180// +180 pour n'avoir que des valeurs positives
+    return "" + (Math.floor(Math.floor(Math.floor(lon * this.pHoriz[1]) / this.pHoriz[0])) * this.pHoriz[0]);
+  }
+
+  calculTuileEcran() {
+    let nord = Number(this.calculEchelleVerticale(this.myMap.getBounds().getNorth()));
+    let sud = Number(this.calculEchelleVerticale(this.myMap.getBounds().getSouth()));
+    //console.log("sud: " + sud + " nord: " + nord + ", nord-sud: " + (nord-sud));
+    let ouest = Number(this.calculEchelleHorzontale(this.myMap.getBounds().getWest()));
+    let est = Number(this.calculEchelleHorzontale(this.myMap.getBounds().getEast()));
+
+    //console.log("ouest: " + ouest + ", est: " + est + ", est-ouest: " + (est-ouest));
   }
 
 }
