@@ -1,1 +1,22 @@
-<input type="text" [(ngModel)] ="stopId"/><input type="button" value="Favori"/>
+<div>
+    <h5 *ngIf="stopDto.id"><input type="checkbox"  [checked]="isCheked(stopDto.id)"  (change)="onCheckboxChange(stopDto, $event, 'reseau')" /> {{stopDto.title}} </h5>
+</div>
+<div *ngIf="stopDto.name">
+    <h5>{{stopDto.name}}</h5>
+</div>
+<div>
+    <h6 *ngFor="let agence of stopDto.agence">
+        <a href={{agence.url}} target='_blank'>{{agence.name}}</a> {{agence.tel}}
+    </h6>
+</div>
+<div *ngIf="stopDto.route_short_name">
+    <h6>
+        <div [style.color]="'#' + stopDto.route_color"><input type="checkbox" [checked]="isCheked(stopDto.id+'_'+stopDto.route_id)" (change)="onCheckboxChange(stopDto, $event, 'ligne')"/>  ligne : {{stopDto.route_short_name}}</div>
+        <div>{{stopDto.route_long_name}}</div>
+    </h6>
+</div>
+<div *ngIf="stopDto.stop_name">
+    <input type="checkbox"   [checked]="isCheked(stopDto.id+'_'+stopDto.route_id+'_'+stopDto.stop_id)"  (change)="onCheckboxChange(stopDto, $event, 'arret')"/>
+    Arrêt : {{stopDto.stop_name}}
+    
+</div>

@@ -1,6 +1,7 @@
 
 <div *ngFor="let reseau of lstCheckBoxDescReseau; let i=index">
     <input type="checkbox" [checked]="reseau.display" [value]="reseau.id" (change)="onCheckboxChange(reseau, $event)"/>
-    {{ reseau.title}}{{ reseau.name?", " + reseau.name:""}} {{reseau.id}} {{reseau.rt}} {{afficheAgence(reseau)}}
-  </div>
+    <img style="height: 20px;" [src]="imageReseau(reseau)" alt="" (click)="onClickImage(reseau)">
+    {{ reseau.title}}{{ reseau.name?", " + reseau.name:""}}
+</div>
 

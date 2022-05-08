@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import { DescReseau } from 'src/app/data/trajets';
+import { DescReseau } from 'src/app/data/descReseau';
 
 @Injectable({
   providedIn: 'root'

@@ -1,7 +1,9 @@
 <div class="box">
   <div id="recherche">
     <app-recherche-lieu (locationSelected)="getAddress($event)"></app-recherche-lieu>
+    <app-detail-stop *ngIf="detailStopService"></app-detail-stop>
   </div>
+ 
   <div id="map">
     <div style="text-align:center">
       <h1>
@@ -18,9 +20,9 @@
     </div>
   </div>
 </div>
-<app-detail-stop *ngIf="markSelected" stopId={{markSelected}}></app-detail-stop>
 
-  <input type="text" [(ngModel)] ="zoom"/>
+
+  <input type="hidden" [(ngModel)] ="zoom"/>
 <!--<input type="text" [(ngModel)] ="nbReseaux"/>-->
 
   

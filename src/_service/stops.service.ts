@@ -1,9 +1,8 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { map } from 'leaflet';
-import { Observable, tap } from 'rxjs';
-import { Stop } from '../app/data/stops';
-import { Coord, DescReseau, realTimesAlerts, realTimesVehicles, Trajet } from '../app/data/trajets';
+import { Observable } from 'rxjs';
+import { DescReseau } from 'src/app/data/descReseau';
+import { realTimesAlerts, realTimesVehicles, Trajet } from '../app/data/trajets';
 
 @Injectable({
   providedIn: 'root'

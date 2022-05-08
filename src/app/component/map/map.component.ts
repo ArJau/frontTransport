@@ -1,11 +1,14 @@
 import { Component, ElementRef, EventEmitter, OnInit, Output, ViewChild } from '@angular/core';
 import * as L from 'leaflet';
 import { StopsService } from 'src/_service/stops.service';
-import { DescReseau, Favori, realTimesVehicles, Trajet } from 'src/app/data/trajets';
+import { Favori, realTimesVehicles, Trajet } from 'src/app/data/trajets';
 import 'leaflet-rotatedmarker';
 import { LstReseauxObservableService } from 'src/_service/lst-reseaux-observable.service';
 import { Stop } from 'src/app/data/stops';
 import { UserService } from 'src/_service/user.service';
+import { StopDto } from 'src/app/data/stopDto';
+import { DetailStopService } from 'src/_service/detail-stop.service';
+import { DescReseau } from 'src/app/data/descReseau';
 
 
 @Component({
@@ -25,7 +28,7 @@ export class MapComponent implements OnInit {
   public stopIcons: any = [];
   public busIcons: any = [];
   public nbReseaux: Number = 0;
-  public markSelected: any;
+  public markSelected: boolean = false;
 
 
   public mapMarker = new Map();
@@ -40,14 +43,21 @@ export class MapComponent implements OnInit {
   public mapIdReseauIdRoute = new Map();
 
   
-  public tabColor = ["#641e16","#c0392b", "#633974", "#af7ac5", "#6c3483"
-  , "#5499c7", "#117864", "#1abc9c", "#27ae60", "#2ecc71", "#7d6608", 
-  "#d4ac0d", "#f7dc6f", "#b9770e", "#d68910", "#ba4a00", "#7b7d7d", 
-  "#aab7b8", "#17202a", "#566573", "#58d68d", "red", "blue", "yellow", "green", "pink", "orange"];
+  public tabColor = [
+  "641e16", "c0392b", "633974", "af7ac5", "6c3483", "5499c7", 
+  "117864", "1abc9c", "27ae60", "2ecc71", "7d6608", "d4ac0d", 
+  "f7dc6f", "b9770e", "d68910", "ba4a00", "7b7d7d", "aab7b8", 
+  "17202a", "566573", "58d68d", "FF0000", "00FFFF","FF00FF", 
+  "0000FF", "00FF00","FFFF00", "008000", "FF69B", "FFA500"];
 
   constructor(private _stopsService: StopsService,
     private _lstReseauxObservableService: LstReseauxObservableService,
-    private _userService: UserService) {
+    private _userService: UserService, 
+    private _detailStopService : DetailStopService) {
+  }
+
+  detailStopService():StopDto{
+    return this._detailStopService.stopDetail;
   }
 
   onMapZoom(e: any) {
@@ -184,10 +194,23 @@ export class MapComponent implements OnInit {
 
               this.mapDescReseau.set(descReseau.id, descReseau);
               if (descReseau.center[0]) {
+                let icon = this.busIcons[(descReseau.rt ? "2" : "1")];
+                console.log(descReseau.zoom);
+                if (descReseau.zoom>=8){
+                  icon.options.iconSize = [18,20];
+                }else{
+                  icon.options.iconSize = [29,30];
+                }
                 L.marker([descReseau.center[0], descReseau.center[1]], {
-                  icon: (this.busIcons[(descReseau.rt ? "2" : "1")])
+                  icon: (icon)
                 })
                   .bindPopup(descReseau.title  + (descReseau.name?"<br>" + descReseau.name:""))
+                  .addEventListener("click", () => {
+                      let stopDto =  StopDto.stopCompletReseau(descReseau);
+                      this._detailStopService.stopDetail = stopDto;
+                      this.markSelected = true;
+                  })
+
                   .addTo(this.myMap);
               }
 
@@ -256,18 +279,6 @@ export class MapComponent implements OnInit {
     }
   }
 
-  addVehicles(id: string) {
-    if (this.zoom > 10) {
-      //console.log("addVehicles: " + id);
-      if (!this.mapCacheVehicles.get(id)) {//on evite de recharger les memes vehicules
-        this.mapCacheVehicles.set(id, []);
-        console.log("lance: " + id);
-        this.relance(id);
-      }
-    } else {
-
-    }
-  }
 
   /**
    * 
@@ -282,40 +293,11 @@ export class MapComponent implements OnInit {
         tabReseauDescription.push(this.mapDescReseau.get(id));
       }
     }
-    console.log(tabReseauDescription);
     this._lstReseauxObservableService.lstReseaux = tabReseauDescription;
     //}
   }
 
-  loadVehicles(id: string) {
-    this.mapCacheVehicles.get(id).forEach(
-      (vehicle: L.Marker) => {
-        vehicle.remove();
-      });
-
-    this._stopsService.getRealtimeVehiclesByIdReseaux$(id).subscribe({
-      next: (lstVehicles: realTimesVehicles[]) => {
-        lstVehicles.forEach(vehicle => {
-          //if (this.mapCacheVehicles.get(id)){
-          this.mapCacheVehicles.get(id).push(
-            L.marker([vehicle.coord[0], vehicle.coord[1]], {
-              rotationAngle: vehicle.bearing,
-              icon: (this.busIcons[0])
-            }).bindPopup("id: " + vehicle.id + ", bearing:" + vehicle.bearing).addTo(this.myMap));
-        });
-      }
-    });
-  }
-
-  relance(id: string) {
-    if (this.mapCacheVehicles.get(id)) {
-      console.log("relance: " + id);
-      this.loadVehicles(id);
-      setTimeout(() => {
-        this.relance(id);
-      }, 60000);
-    }
-  }
+  
 
   /**Ajoute les arret de bus (marker) et les lignes de bus sur la carte*/
   addMarker(lat: number, lng: number) {
@@ -348,6 +330,8 @@ export class MapComponent implements OnInit {
     this._stopsService.getStopsByIdPositionIdReseauTrajet$(idPosition, idReseau).subscribe({
       next: (lstTrajet: Trajet[]) => {
         lstTrajet.forEach(trajet => {
+          if (!trajet.route_color)
+            trajet.route_color = this.tabColor[Math.floor(Math.random()*this.tabColor.length)];
           if (!this.mapIdReseauIdRoute.get(idReseau)) {
             this.mapIdReseauIdRoute.set(idReseau, new Map());
           }
@@ -375,19 +359,22 @@ export class MapComponent implements OnInit {
             }
             this.mapIdReseauIdRoute.get(idReseau).get(trajet.route_id)[2].push(
               L.polyline(this.mapIdReseauIdRoute.get(idReseau).get(trajet.route_id)[1], {
-                color: (trajet.route_color?("#" + trajet.route_color):this.tabColor[Math.floor(Math.random()*this.tabColor.length)]),
+                color: "#" + trajet.route_color,
                 weight: 2
               })
-                .bindPopup(
+                /*.bindPopup(
                   this.mapDescReseau.get(idReseau).title + 
                   (this.mapDescReseau.get(idReseau).name?"<br>" + this.mapDescReseau.get(idReseau).name:"") + 
                   "<br>Ligne: " + trajet.route_short_name + " (" + trajet.route_long_name + ")" +
                   "<br>" + trajet.id
-                  )
+                  )*/
                 .addEventListener("click", (line) => {
                   this.mapIdReseauIdRoute.get(idReseau).get(trajet.route_id)[0].forEach((marker: L.Marker) => {
                     marker.setIcon(this.stopIcons[this.getIcone(true)]);
                     marker.setZIndexOffset(150);
+                    let stopDto =  StopDto.stopCompletTrajet(this.mapDescReseau.get(trajet.id), trajet);
+                    this._detailStopService.stopDetail = stopDto;
+                    this.markSelected = true;
                   });
 
                   line.target.bringToFront();
@@ -424,15 +411,18 @@ export class MapComponent implements OnInit {
     return L.marker([stop.stop_lat, stop.stop_lon], {
       icon: (this.stopIcons[this.getIcone(false)])
     })
-      .bindPopup(
+      /*.bindPopup(
         this.mapDescReseau.get(trajet.id).title + 
         (this.mapDescReseau.get(trajet.id).name?"<br>" + this.mapDescReseau.get(trajet.id).name:"") + 
         "<br> - Ligne: " + trajet.route_short_name + " (" + trajet.route_long_name + ")" +
         "<br> - Arret: " + stop.stop_name + 
         "<br>" + trajet.id
-      )
+      )*/
       .addEventListener("click", () => {
-        this.markSelected = stop.stop_id;
+        let stopDto =  StopDto.stopCompletStop(this.mapDescReseau.get(trajet.id), trajet, stop);
+        this._detailStopService.stopDetail = stopDto;
+        this.markSelected = true;
+
       })
       .addEventListener("mouseover", () => {
         this.mapIdReseauIdRoute.get(trajet.id).get(trajet.route_id)[0].forEach((marker: L.Marker) => {
@@ -465,6 +455,53 @@ export class MapComponent implements OnInit {
         return 2;
     }
 
+  }
+
+  
+  addVehicles(id: string) {
+    if (this.zoom > 10) {
+      //console.log("addVehicles: " + id);
+      if (!this.mapCacheVehicles.get(id)) {//on evite de recharger les memes vehicules
+        this.mapCacheVehicles.set(id, []);
+        console.log("lance: " + id);
+        this.relance(id);
+      }
+    } 
+  }
+
+  loadVehicles(id: string) {
+    this._stopsService.getRealtimeVehiclesByIdReseaux$(id).subscribe({
+      next: (lstVehicles: realTimesVehicles[]) => {
+        console.log("lstVehicles.length: " + lstVehicles.length);
+        console.log("mapCacheVehicles.get(id).size(): " + this.mapCacheVehicles.get(id).size);
+        console.log(lstVehicles.length != 0 || (this.mapCacheVehicles.get(id) && this.mapCacheVehicles.get(id).size == 0))
+        if (lstVehicles.length != 0 || (this.mapCacheVehicles.get(id) && this.mapCacheVehicles.get(id).size == 0)) {
+          this.mapCacheVehicles.get(id).forEach(
+            (vehicle: L.Marker) => {
+              vehicle.remove();
+            });
+          lstVehicles.forEach(vehicle => {
+            this.mapCacheVehicles.get(id).push(
+              L.marker([vehicle.coord[0], vehicle.coord[1]], {
+                rotationAngle: vehicle.bearing,
+                icon: (this.busIcons[0])
+              }).bindPopup("id: " + vehicle.id + ", bearing:" + vehicle.bearing).addTo(this.myMap));
+          });
+
+         
+        }
+      }
+    });
+  }
+
+  relance(id: string) {
+    if (this.mapCacheVehicles.get(id)) {
+      console.log("relance: " + id);
+      this.loadVehicles(id);
+      setTimeout(() => {
+        this.relance(id);
+      }, 60000);
+    }
   }
 
   /**

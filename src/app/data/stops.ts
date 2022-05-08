@@ -4,21 +4,17 @@ export class Stop{
         public id : string="",
         public stop_id : string="",
         public stop_name : string="",
-        public coord :[{
-            lat: number,
-            lon: number
-            }],
+        public coord : Coord=new Coord(0,0),
         public stop_lat : number=0,
         public stop_lon : number=0,
-        public idPosition : [],
-        
-        //public location_type : string="",
-        //public parent_station : string=""
+        public idPosition : [] = []
         ){
     }
 }
 
-export class Greeting{
-    id:any;
-    content:any;
+export class Coord{
+    constructor(
+        public lat: number=0,
+        public lon: number=0
+    ){}
 }

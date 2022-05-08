@@ -27,7 +27,6 @@ export class RechercheLieuComponent implements OnInit {
           lstLieu.forEach(lieu => {
             if (lieu.address.country == "France"
               && (lieu.type == "city" || lieu.type == "postcode" || lieu.type == "administrative")) {
-              console.log(lieu);
               if (!mapLieuFiltre.get(lieu.address.county + lieu.address.municipality)) {
                 mapLieuFiltre.set(lieu.address.county + lieu.address.municipality, lieu);
                 lieu.zoom = 12;
@@ -49,11 +48,9 @@ export class RechercheLieuComponent implements OnInit {
       .subscribe({
         next: (lstLieu: any[]) => {
           lstLieu.forEach(lieu => {
-            console.log(lieu.address.municipality);
             if (lieu.address.country == "France" && lieu.address.county == dep && lieu.type == "administrative" 
             && lieu.address.municipality == undefined) {
                 lieu.zoom = 10;
-                console.log(lieu);
                 this.lstLieuAffichable.push(lieu);
             }
           });
