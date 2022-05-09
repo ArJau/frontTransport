@@ -20,6 +20,7 @@ export class Favori {
     constructor(
         public noReseauId: string = "",
         public reseauId: string = "",
+        public agenceId : string = "",
         public routeId: string = "",
         public stopId: string = "",
         public user: User = new User,
@@ -51,9 +52,13 @@ export class realTimesAlerts {
                 start: number,
                 end: number
             },
-            informedEntity: {
-                routeId: string
-            },
+            informedEntity: [{
+                routeId: string,
+                agencyId: string,
+                routeType: number,
+                stopId: string,
+                trip:string
+            }],
             cause: string,
             effect: string,
             url: {

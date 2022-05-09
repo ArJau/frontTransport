@@ -19,6 +19,7 @@ import { RechercheLieuComponent } from './component/recherche-lieu/recherche-lie
 import { DetailStopComponent } from './component/detail-stop/detail-stop.component';
 import { FiltreReseauxComponent } from './component/filtre-reseaux/filtre-reseaux.component';
 import { AuthInterceptor, authInterceptorProviders } from 'src/_helpers/auth.interceptor';
+import { AlertComponent } from './component/alert/alert.component';
 
 
 
@@ -36,7 +37,8 @@ import { AuthInterceptor, authInterceptorProviders } from 'src/_helpers/auth.int
     AppComponent,
     RechercheLieuComponent,
     DetailStopComponent,
-    FiltreReseauxComponent
+    FiltreReseauxComponent,
+    AlertComponent
   ],
   imports: [
     BrowserModule,

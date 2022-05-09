@@ -42,8 +42,14 @@ export class StopsService {
     return this._http.get<realTimesVehicles[]>(url)
   }
 
-  public getRealtimeAlertsByIdReseaux$(idReseau: string): Observable<realTimesAlerts[]> {
-    let url = this.DATA_API + `/public/realtimesalerts/${idReseau}`;
+  public getRealtimeAlertsByIdsReseaux$(lstIdReseau: string[]): Observable<realTimesAlerts[]> {
+    let idsReseau:string="";
+    for (let i in lstIdReseau){
+      idsReseau += lstIdReseau[i]+",";
+    }
+    idsReseau = idsReseau.substring(0,idsReseau.length-1);
+    const params = new HttpParams().set('idsReseau', idsReseau);
+    let url = this.DATA_API + `/public/realtimesalerts?${params.toString()}`;
     console.log("url = " + url);
     return this._http.get<realTimesAlerts[]>(url)
   }

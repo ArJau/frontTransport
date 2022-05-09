@@ -1,5 +1,5 @@
 <div>
-    <h5 *ngIf="stopDto.id"><input type="checkbox"  [checked]="isCheked(stopDto.id)"  (change)="onCheckboxChange(stopDto, $event, 'reseau')" /> {{stopDto.title}} </h5>
+    <h5 *ngIf="stopDto.id"><input type="checkbox"  [checked]="isCheked(stopDto.id)"  (change)="onCheckboxChange(stopDto, $event, 'agence')" /> {{stopDto.title}} </h5>
 </div>
 <div *ngIf="stopDto.name">
     <h5>{{stopDto.name}}</h5>
@@ -11,12 +11,12 @@
 </div>
 <div *ngIf="stopDto.route_short_name">
     <h6>
-        <div [style.color]="'#' + stopDto.route_color"><input type="checkbox" [checked]="isCheked(stopDto.id+'_'+stopDto.route_id)" (change)="onCheckboxChange(stopDto, $event, 'ligne')"/>  ligne : {{stopDto.route_short_name}}</div>
+        <div [style.color]="'#' + stopDto.route_color"><input type="checkbox" [checked]="isCheked(stopDto.id+'_'+stopDto.route_id)" (change)="onCheckboxChange(stopDto, $event, 'route')"/>  ligne : {{stopDto.route_short_name}}</div>
         <div>{{stopDto.route_long_name}}</div>
     </h6>
 </div>
 <div *ngIf="stopDto.stop_name">
-    <input type="checkbox"   [checked]="isCheked(stopDto.id+'_'+stopDto.route_id+'_'+stopDto.stop_id)"  (change)="onCheckboxChange(stopDto, $event, 'arret')"/>
+    <input type="checkbox"   [checked]="isCheked(stopDto.id+'_'+stopDto.route_id+'_'+stopDto.stop_id)"  (change)="onCheckboxChange(stopDto, $event, 'stop')"/>
     Arrêt : {{stopDto.stop_name}}
     
 </div>

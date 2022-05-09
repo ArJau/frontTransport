@@ -1,7 +1,7 @@
 import { Component, ElementRef, EventEmitter, OnInit, Output, ViewChild } from '@angular/core';
 import * as L from 'leaflet';
 import { StopsService } from 'src/_service/stops.service';
-import { Favori, realTimesVehicles, Trajet } from 'src/app/data/trajets';
+import { Favori, realTimesAlerts, realTimesVehicles, Trajet } from 'src/app/data/trajets';
 import 'leaflet-rotatedmarker';
 import { LstReseauxObservableService } from 'src/_service/lst-reseaux-observable.service';
 import { Stop } from 'src/app/data/stops';
@@ -9,6 +9,8 @@ import { UserService } from 'src/_service/user.service';
 import { StopDto } from 'src/app/data/stopDto';
 import { DetailStopService } from 'src/_service/detail-stop.service';
 import { DescReseau } from 'src/app/data/descReseau';
+import { AlertService } from 'src/_service/alert.service';
+import { Alert } from 'src/app/data/alert';
 
 
 @Component({
@@ -42,6 +44,8 @@ export class MapComponent implements OnInit {
   public mapIdReseauIdPosition = new Map();
   public mapIdReseauIdRoute = new Map();
 
+  public maplstReseauFavori = new Map();
+  public lstAlert = [];
   
   public tabColor = [
   "641e16", "c0392b", "633974", "af7ac5", "6c3483", "5499c7", 
@@ -53,13 +57,11 @@ export class MapComponent implements OnInit {
   constructor(private _stopsService: StopsService,
     private _lstReseauxObservableService: LstReseauxObservableService,
     private _userService: UserService, 
-    private _detailStopService : DetailStopService) {
+    private _detailStopService : DetailStopService,
+    private _alert :AlertService) {
   }
 
-  detailStopService():StopDto{
-    return this._detailStopService.stopDetail;
-  }
-
+  /**Action déclencher losque l'on zoom sur la carte */
   onMapZoom(e: any) {
     this.zoom = this.myMap.getZoom();
     this.onMapMove(this.myMap.getCenter());
@@ -164,7 +166,7 @@ export class MapComponent implements OnInit {
       next: (lstFavori: Favori[]) => {
         
         for (let i in lstFavori) {
-          if (lstFavori[i].noReseauId) {
+          if (lstFavori[i].noReseauId) {//favori des reseaux que l'on ne veut pas qu'ils s'affiche
             maplstNoReseauFavori.set(lstFavori[i].noReseauId, true);
           }
         }
@@ -174,28 +176,12 @@ export class MapComponent implements OnInit {
           next: (lstDescReseau: DescReseau[]) => {
             this.nbReseaux = lstDescReseau.length;
             lstDescReseau.forEach(descReseau => {
-              //console.log("descReseau.center: " + descReseau.center[0] + " " + descReseau.center[1]);
               descReseau.display = maplstNoReseauFavori.get(descReseau.id) ? false : true;
-          
-              let zoom = Math.ceil(descReseau.coord[2] - descReseau.coord[0]);
-              if (!zoom)
-                descReseau.zoom = 12;
-              else if (zoom <= 2)
-                descReseau.zoom = 10;
-              else if (zoom <= 4)
-                descReseau.zoom = 9;
-              else if (zoom <= 6)
-                descReseau.zoom = 8;
-              else
-                descReseau.zoom = 6;
-
-
-              //console.log(zoom + " -> " + descReseau.zoom + "  : " + descReseau.id + " : " + descReseau.title + ", " +  descReseau.name + ": "+   descReseau.coord);
+              //console.log(descReseau.zoom + "  : " + descReseau.id + " : " + descReseau.title + ", " +  descReseau.name + ": " + descReseau.coord + ", center :" + descReseau.center);
 
               this.mapDescReseau.set(descReseau.id, descReseau);
               if (descReseau.center[0]) {
                 let icon = this.busIcons[(descReseau.rt ? "2" : "1")];
-                console.log(descReseau.zoom);
                 if (descReseau.zoom>=8){
                   icon.options.iconSize = [18,20];
                 }else{
@@ -210,7 +196,6 @@ export class MapComponent implements OnInit {
                       this._detailStopService.stopDetail = stopDto;
                       this.markSelected = true;
                   })
-
                   .addTo(this.myMap);
               }
 
@@ -230,17 +215,75 @@ export class MapComponent implements OnInit {
               }
               this.mapIdReseauIdPosition.set(descReseau.id, lstPos);
             });
+
+            this.loadAlerts(lstFavori);
           }
+          
         });
-
-
       }
     })
-
 
     this._lstReseauxObservableService.lstReseauxAffiche$.subscribe((desc: DescReseau) => {
       this.afficherReseaux(desc);
     })
+  }
+
+  loadAlerts(lstAlertFavori: Favori[]) {
+
+    let mapAlert = new Map();//map d'optimisation permettant de retrouver facilement une alert favori
+    let mapId = new Map();
+    for (let j in lstAlertFavori) {
+      if (!lstAlertFavori[j].noReseauId) {
+        if (lstAlertFavori[j].stopId != "")
+          mapAlert.set(lstAlertFavori[j].reseauId + "_" + lstAlertFavori[j].stopId, true);
+        else if (lstAlertFavori[j].routeId != "")
+          mapAlert.set(lstAlertFavori[j].reseauId + "_" + lstAlertFavori[j].routeId, true);
+        else if (lstAlertFavori[j].stopId != "")
+          mapAlert.set(lstAlertFavori[j].reseauId + "_" + lstAlertFavori[j].agenceId, true);
+
+        if (!mapId.get(lstAlertFavori[j].reseauId)) {
+          mapId.set(lstAlertFavori[j].reseauId, true)
+        }
+      }
+    }
+
+    let ids = Array.from(mapId.keys())
+    this._stopsService.getRealtimeAlertsByIdsReseaux$(ids).subscribe({
+      next: (lstAlertrealTimes: realTimesAlerts[]) => {
+        let lstAlert: Alert[] = [];
+        lstAlertrealTimes.forEach(realTimesAlert => {
+          let alertEntity = realTimesAlert.alert;
+          //console.log(lstEntity);
+          for (let i in alertEntity.informedEntity) {//boucle sur les alertes remontée par le systeme
+            let alert = new Alert();
+            let type = "";
+            let id = ""
+            if (alertEntity.informedEntity[i].agencyId != "") {
+              type = "agence";
+              id = alertEntity.informedEntity[i].agencyId;
+            } else if (alertEntity.informedEntity[i].routeId != "") {
+              type = "route";
+              id = alertEntity.informedEntity[i].routeId;
+            } else if (alertEntity.informedEntity[i].stopId != "") {
+              type = "stop";
+              id = alertEntity.informedEntity[i].stopId;
+            }
+            if (mapAlert.get(realTimesAlert.idReseau + "_" + id)) {//création d'alerte qui seront affichée
+              alert.type = type;
+              alert.headerAlert = realTimesAlert.alert.headerText.translation[0].text;
+              alert.textAlert = realTimesAlert.alert.descriptionText.translation[0].text;
+              alert.idReseau = realTimesAlert.idReseau;
+              alert.titleReseau = this.mapDescReseau.get(realTimesAlert.idReseau).title;
+              alert.id = id
+              lstAlert.push(alert);
+              break;
+            }
+          }
+        });
+        this._alert.alert = lstAlert;
+        console.log(lstAlert);
+      }
+    });
   }
 
   /**
@@ -297,7 +340,6 @@ export class MapComponent implements OnInit {
     //}
   }
 
-  
 
   /**Ajoute les arret de bus (marker) et les lignes de bus sur la carte*/
   addMarker(lat: number, lng: number) {
@@ -362,12 +404,6 @@ export class MapComponent implements OnInit {
                 color: "#" + trajet.route_color,
                 weight: 2
               })
-                /*.bindPopup(
-                  this.mapDescReseau.get(idReseau).title + 
-                  (this.mapDescReseau.get(idReseau).name?"<br>" + this.mapDescReseau.get(idReseau).name:"") + 
-                  "<br>Ligne: " + trajet.route_short_name + " (" + trajet.route_long_name + ")" +
-                  "<br>" + trajet.id
-                  )*/
                 .addEventListener("click", (line) => {
                   this.mapIdReseauIdRoute.get(idReseau).get(trajet.route_id)[0].forEach((marker: L.Marker) => {
                     marker.setIcon(this.stopIcons[this.getIcone(true)]);
@@ -411,13 +447,6 @@ export class MapComponent implements OnInit {
     return L.marker([stop.stop_lat, stop.stop_lon], {
       icon: (this.stopIcons[this.getIcone(false)])
     })
-      /*.bindPopup(
-        this.mapDescReseau.get(trajet.id).title + 
-        (this.mapDescReseau.get(trajet.id).name?"<br>" + this.mapDescReseau.get(trajet.id).name:"") + 
-        "<br> - Ligne: " + trajet.route_short_name + " (" + trajet.route_long_name + ")" +
-        "<br> - Arret: " + stop.stop_name + 
-        "<br>" + trajet.id
-      )*/
       .addEventListener("click", () => {
         let stopDto =  StopDto.stopCompletStop(this.mapDescReseau.get(trajet.id), trajet, stop);
         this._detailStopService.stopDetail = stopDto;
@@ -458,6 +487,13 @@ export class MapComponent implements OnInit {
   }
 
   
+
+  isNull(val:any):boolean{
+    if (!val || "" == val || 0==val)
+      return true;
+    return false;
+  }
+
   addVehicles(id: string) {
     if (this.zoom > 10) {
       //console.log("addVehicles: " + id);
@@ -472,9 +508,6 @@ export class MapComponent implements OnInit {
   loadVehicles(id: string) {
     this._stopsService.getRealtimeVehiclesByIdReseaux$(id).subscribe({
       next: (lstVehicles: realTimesVehicles[]) => {
-        console.log("lstVehicles.length: " + lstVehicles.length);
-        console.log("mapCacheVehicles.get(id).size(): " + this.mapCacheVehicles.get(id).size);
-        console.log(lstVehicles.length != 0 || (this.mapCacheVehicles.get(id) && this.mapCacheVehicles.get(id).size == 0))
         if (lstVehicles.length != 0 || (this.mapCacheVehicles.get(id) && this.mapCacheVehicles.get(id).size == 0)) {
           this.mapCacheVehicles.get(id).forEach(
             (vehicle: L.Marker) => {
@@ -487,8 +520,6 @@ export class MapComponent implements OnInit {
                 icon: (this.busIcons[0])
               }).bindPopup("id: " + vehicle.id + ", bearing:" + vehicle.bearing).addTo(this.myMap));
           });
-
-         
         }
       }
     });
@@ -502,6 +533,10 @@ export class MapComponent implements OnInit {
         this.relance(id);
       }, 60000);
     }
+  }
+
+  detailStopService():StopDto{
+    return this._detailStopService.stopDetail;
   }
 
   /**
