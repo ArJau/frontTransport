@@ -228,8 +228,11 @@ export class MapComponent implements OnInit {
     })
   }
 
-  loadAlerts(lstAlertFavori: Favori[]) {
+  /**
+   * Chargement des alertes.  
+  */
 
+  loadAlerts(lstAlertFavori: Favori[]) {
     let mapAlert = new Map();//map d'optimisation permettant de retrouver facilement une alert favori
     let mapId = new Map();
     for (let j in lstAlertFavori) {
@@ -281,7 +284,6 @@ export class MapComponent implements OnInit {
           }
         });
         this._alert.alert = lstAlert;
-        console.log(lstAlert);
       }
     });
   }
