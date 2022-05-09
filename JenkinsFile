@@ -1,0 +1,46 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKERHUB_CREDENTIALS=credentials('docker-hub-cred')
+    }
+    
+    stages {
+        stage('1-Checkout from git') {
+            steps {
+                echo ' **************  1 - Checkout project  ************** '
+                git branch: 'master', url:'https://github.com/ArJau/frontTransport.git'
+            }
+        }
+		stage('2-Changer URL de prod') {
+            steps {
+                echo ' **************  2 - Changer URL de prod ************** '
+                sh 'ls -la'
+                sh "sed -i -E -r 's|.*const DATA_API.*|const DATA_API = \"http://15.237.111.102:8282/transport-api\";|g' src/_service/stops.service.ts"
+                sh "sed -i -E -r 's|.*const AUTH_API.*|const AUTH_API = \"http://15.237.111.102:8085/api/auth\";|g' src/_service/auth.service.ts"
+                sh "sed -i -E -r 's|.*const FAV_API.*|const FAV_API = \"http://15.237.111.102:8085/api/favoris\";|g' src/_service/user.service.ts"
+                sh "sed -i -E -r 's|.*const OSM_API.*|const OSM_API = \"https://nominatim.openstreetmap.org/search\";|g' src/_service/rechercher-lieu.service.ts"
+            }
+        }
+        stage('3-npm install' ) {
+            steps { 
+                echo ' **************   3 - npm install ************** '
+                sh 'npm install'
+            }
+        }
+        stage('4-ng build' ) {
+            steps {
+                echo ' **************   4 - ng build ************** '
+                sh 'ng build'
+            }
+        }
+        
+       stage('5-Transfert des sources sur s3') {
+			steps {
+				withAWS(region:'eu-west-3',credentials:'deploytos3') {
+				   s3Upload(bucket:"bus-transport-front", file:'dist/front-transport/');
+				}
+			}
+		}
+    }
+}0
