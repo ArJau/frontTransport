@@ -24,10 +24,3 @@ export class Agence {
     ) { }
 };
 
-export class Icone {
-    constructor(
-        public idReseau: string = "",
-        public routeId: string = "",
-        public color: number = 0
-    ) { }
-};

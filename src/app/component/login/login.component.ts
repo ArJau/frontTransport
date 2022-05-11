@@ -27,6 +27,7 @@ export class LoginComponent implements OnInit {
       this.roles = this.tokenStorage.getUser().roles;
     }
   }
+  
   onSubmit(): void {
     const { username, password } = this.form;
     this.authService.login(username, password).subscribe(

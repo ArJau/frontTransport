@@ -1,7 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { DescReseau } from 'src/app/data/descReseau';
 import { StopDto } from 'src/app/data/stopDto';
-import { Stop } from 'src/app/data/stops';
 import { Favori } from 'src/app/data/trajets';
 import { DetailStopService } from 'src/_service/detail-stop.service';
 import { LstReseauxObservableService } from 'src/_service/lst-reseaux-observable.service';

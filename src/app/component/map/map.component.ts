@@ -1,14 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import * as L from 'leaflet';
 import { StopsService } from 'src/_service/stops.service';
-import { Favori, realTimesAlerts, realTimesVehicles, Trajet } from 'src/app/data/trajets';
+import { Favori, realTimesVehicles, Trajet } from 'src/app/data/trajets';
 import 'leaflet-rotatedmarker';
 import { LstReseauxObservableService } from 'src/_service/lst-reseaux-observable.service';
 import { Stop } from 'src/app/data/stops';
 import { UserService } from 'src/_service/user.service';
 import { StopDto } from 'src/app/data/stopDto';
 import { DetailStopService } from 'src/_service/detail-stop.service';
-import { DescReseau, Icone } from 'src/app/data/descReseau';
+import { DescReseau } from 'src/app/data/descReseau';
 
 
 @Component({

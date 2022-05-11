@@ -1,6 +1,7 @@
 
 <div *ngFor="let reseau of lstCheckBoxDescReseau; let i=index">
-    <input type="checkbox" title="Afficher/Cacher les réseaux sur la carte" [checked]="reseau.display" [value]="reseau.id" (change)="onCheckboxChange(reseau, $event)"/>
+    <input type="checkbox" title="Afficher/Cacher les réseaux sur la carte" [checked]="reseau.display" [value]="reseau.id" 
+    (change)="onCheckboxChange(reseau, $event)"/>
     <img style="height: 20px;" [src]="imageReseau(reseau)" alt="" (click)="onClickImage(reseau)">
     {{ reseau.title}}{{ reseau.name?", " + reseau.name:""}}
 </div>
