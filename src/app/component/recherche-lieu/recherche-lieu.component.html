@@ -1,14 +1,14 @@
-<h4>Localisation</h4>
-<h5>Par département</h5>
-<select>
+<h5>Localisation</h5>
+<h6>Par département</h6>
+<select style="width: 200px">
     <option (click)="rechercheLieuDep(dep.dep_name)" *ngFor="let dep of lstDepartement[0]" 
         [ngValue]="dep.dep_name">
         {{dep.num_dep + " - " + dep.dep_name}}
     </option>
 </select>
 
-<h5>Par commune ou code postal</h5>
-<input type="text" [(ngModel)]="q"  (keydown.enter)="rechercheLieu()" />
+<h6>Par commune ou code postal</h6>
+<input type="text" style="width: 200px" [(ngModel)]="q" (keydown.enter)="rechercheLieu()" />
 <input type="button" (click)="rechercheLieu()"
 value="Rechercher"/>
 

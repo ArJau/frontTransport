@@ -1,5 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-import { RechercherLieuService } from 'src/_service/rechercher-lieu.service';
 import { TokenStorageService } from 'src/_service/token-storage.service';
 @Component({
   selector: 'app-root',
@@ -18,6 +17,7 @@ export class AppComponent implements OnInit {
 
   ngOnInit(): void {
     this.isLoggedIn = !!this.tokenStorageService.getToken();
+    console.log(this.isLoggedIn);
     if (this.isLoggedIn) {
       const user = this.tokenStorageService.getUser();
       this.roles = user.roles;
@@ -25,6 +25,9 @@ export class AppComponent implements OnInit {
       this.showModeratorBoard = this.roles.includes('ROLE_MODERATOR');
       this.username = user.username;
     }
+  }
+  isLogin(){
+    return !!this.tokenStorageService.getToken();
   }
   logout(): void {
     this.tokenStorageService.signOut();

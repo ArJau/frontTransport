@@ -10,7 +10,7 @@ import lstDep from '../../../assets/departements-region.json';
 export class RechercheLieuComponent implements OnInit {
 
   constructor(public _rechercherLieuService: RechercherLieuService) { }
-  public q: string = "brest";
+  public q: string = "";
   public dep: string = "";
   public lstLieuAffichable: any = [];
   public lstDepartement: any = [];

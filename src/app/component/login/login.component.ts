@@ -41,7 +41,12 @@ export class LoginComponent implements OnInit {
         this.router.navigate(['/map']);
       },
       err => {
-        this.errorMessage = err.error.message;
+        console.log(err);
+        if (err.error){
+          this.errorMessage = err.error.message;
+        }else{
+          this.errorMessage = "Login ou mot de passe inconnu";
+        }
         this.isLoginFailed = true;
       }
     );

@@ -55,17 +55,19 @@ export class MapComponent implements OnInit {
     this.onMapMove(this.myMap.getCenter());
 
 
-    if (this.zoom <= 10) {
-      this.routeSelected = [];
-      for (const [idReseau, reseau] of this.mapIdReseauIdRoute) {
-        for (const [idRoute, route] of reseau) {
-          if (route) {
-            route[0].forEach((marker: L.Marker) => {
-              marker.setIcon(this.getIcone(false, 0));
-            });
-          }
+    /*for (const [idReseau, reseau] of this.mapIdReseauIdRoute) {
+      for (const [idRoute, route] of reseau) {
+        if (route) {
+          route[0].forEach((marker: L.Marker) => {
+            marker.setIcon(this.getIcone(false, 0));
+          });
         }
       }
+    }*/
+
+    if (this.zoom <= 10) {
+      this.routeSelected = [];
+      
 
       for (const [idPosition, position] of this.mapIdPositionIdReseau) {
         for (const [idReseau, reseau] of position) {
@@ -126,19 +128,19 @@ export class MapComponent implements OnInit {
       iconSize: [12, 18], iconAnchor: [7, 10],
       iconUrl: 'assets/img/arretBusBleu.png'
     }));
-    tab.push(L.icon({
+    tab.push(L.icon({//1
       iconSize: [12, 18], iconAnchor: [7, 10],
       iconUrl: 'assets/img/arretBusBleuFonce.png'
     }));
-    tab.push(L.icon({
+    tab.push(L.icon({//2
       iconSize: [12, 18], iconAnchor: [7, 10],
-      iconUrl: 'assets/img/arretBusVert.png'
+      iconUrl: 'assets/img/arretBus.png'
     }))
-    tab.push(L.icon({
+    tab.push(L.icon({//3
       iconSize: [12, 18], iconAnchor: [7, 10],
       iconUrl: 'assets/img/arretBusViolet.png'
     }))
-    tab.push(L.icon({
+    tab.push(L.icon({//4
       iconSize: [12, 18], iconAnchor: [7, 10],
       iconUrl: 'assets/img/arretBusOrange.png'
     }))
@@ -157,6 +159,11 @@ export class MapComponent implements OnInit {
       iconSize: [18, 20], iconAnchor: [0, 10],
       iconUrl: 'assets/img/busReseauxRt.png'
     }));
+    this.busIcons.push(L.icon({
+      iconSize: [18, 20], iconAnchor: [0, 10],
+      iconUrl: 'assets/img/busVert.png'
+    }));
+    
 
     this.myMap = L.map('busMap').setView([this.lat, this.lng], this.zoom);
 
@@ -360,16 +367,18 @@ export class MapComponent implements OnInit {
                   line.target.bringToFront();
                 })
                 .addEventListener("mouseover", (line) => {
-                  if(!this.routeSelected.includes(trajet.id+","+trajet.route_id)){
+                  let stopDto =  StopDto.stopCompletTrajet(MapComponent.mapDescReseau.get(trajet.id), trajet);
+                  this._detailStopService.stopDetail = stopDto;
+                  this.markSelected = true;//declenche l'affichage du detail des arrets
+                  if(!this.routeSelected.includes(trajet.id+","+trajet.route_id)){//si elle n'est pas selectionnée
                     this.mapIdReseauIdRoute.get(trajet.id).get(trajet.route_id)[0].forEach((marker: L.Marker) => {
                       marker.setIcon(this.getIcone(true, 0));
                       marker.setZIndexOffset(150);
                     });
-                  line.target.bringToFront();
                   }
+                  line.target.bringToFront();
                 }).addEventListener("mouseout", (line) => {
-                  console.log("mouseout:  " + trajet.id+","+trajet.route_id);
-                  console.log(this.routeSelected);
+                  console.log("mouseout trajet:  " + trajet.id+","+trajet.route_id);
                   if(!this.routeSelected.includes(trajet.id+","+trajet.route_id)){
                     this.mapIdReseauIdRoute.get(trajet.id).get(trajet.route_id)[0].forEach((marker: L.Marker) => {
                       marker.setIcon(this.getIcone(false, 0));
@@ -394,12 +403,21 @@ export class MapComponent implements OnInit {
     let idRouteSelection = trajet.id + "," + trajet.route_id;
     let colorNum = 0;
     if (!this.routeSelected.includes(idRouteSelection)) {//si la ligne n'est pas déjà selectionnée
-      if (this.routeSelected.length < 8) {
-        colorNum = (this.routeSelected.length / 2) + 1;
-      } else if (this.routeSelected.length == 8) {//si on arrive au bout des 4 lignes sélectionnées on reprend la couleur de la premiere
-        colorNum = this.routeSelected[this.routeSelected.indexOf(idRouteSelection) + 2];
-      }
-      this.routeSelected.push(idRouteSelection, colorNum);
+     
+        if (this.routeSelected.includes("")){//si il y a un espace de vide alors on y met la route
+          colorNum = this.routeSelected[this.routeSelected.indexOf("") + 1 ];
+          this.routeSelected[this.routeSelected.indexOf("")] = idRouteSelection;
+        }else{
+          if (this.routeSelected.length < 8) {
+            colorNum = (this.routeSelected.length / 2) + 1;
+          } else if (this.routeSelected.length == 8) {//si on arrive au bout des 4 lignes sélectionnées on reprend la couleur de la premiere
+            colorNum = this.routeSelected[1];
+          }
+          this.routeSelected.push(idRouteSelection, colorNum);
+        }
+      
+      
+      console.log(this.routeSelected);
 
       this.mapIdReseauIdRoute.get(trajet.id).get(trajet.route_id)[0].forEach((marker: L.Marker) => {
         marker.setIcon(this.getIcone(true, colorNum));
@@ -441,7 +459,7 @@ export class MapComponent implements OnInit {
     this.mapIdReseauIdStopTrajet.get(trajet.id).get(stop.stop_id).push(trajet.route_id);
    
     return L.marker([stop.stop_lat, stop.stop_lon], {
-      icon: (this.getIcone(false, 0))
+      icon: (this.stopIcons[1])
     })
       .addEventListener("click", () => {
         let stopDto =  StopDto.stopCompletStop(MapComponent.mapDescReseau.get(trajet.id), trajet, stop);
@@ -451,19 +469,22 @@ export class MapComponent implements OnInit {
       })
       .addEventListener("mouseover", () => {
         let lstRouteId = this.mapIdReseauIdStopTrajet.get(trajet.id).get(stop.stop_id);
-        //for (let i in lstRouteId){
-          if(!this.routeSelected.includes(trajet.id+","+trajet.route_id)){
-            this.mapIdReseauIdRoute.get(trajet.id).get(lstRouteId[0])[0].forEach((marker: L.Marker) => {
-              marker.setIcon(this.getIcone(true, 0));
-              marker.setZIndexOffset(150);
-            });
-          }
-        //}
+        let stopDto =  StopDto.stopCompletStop(MapComponent.mapDescReseau.get(trajet.id), trajet, stop);
+        this._detailStopService.stopDetail = stopDto;
+        this.markSelected = true;
+
+        if(!this.routeSelected.includes(trajet.id+","+trajet.route_id)){
+          this.mapIdReseauIdRoute.get(trajet.id).get(lstRouteId[0])[0].forEach((marker: L.Marker) => {
+            marker.setIcon(this.getIcone(true, 0));
+            marker.setZIndexOffset(150);
+          });
+        }
       })
       .addEventListener("mouseout", () => {
+        console.log("mouseout Marker:  " + trajet.id+","+trajet.route_id);
         let lstRouteId = this.mapIdReseauIdStopTrajet.get(trajet.id).get(stop.stop_id);
         if(!this.routeSelected.includes(trajet.id+","+trajet.route_id)){
-        -//for (let i in lstRouteId){
+        //for (let i in lstRouteId){
           //this.mapIdReseauIdRoute.get(trajet.id).get(lstRouteId[i])[0].forEach((marker: L.Marker) => {
           this.mapIdReseauIdRoute.get(trajet.id).get(lstRouteId[0])[0].forEach((marker: L.Marker) => {
           marker.setIcon(this.getIcone(false, 0));
@@ -492,7 +513,7 @@ export class MapComponent implements OnInit {
       if (isOver)
         return this.stopIcons[3][colorNum];
       else
-        return this.stopIcons[2];
+        return this.stopIcons[1];
     }
   }
   /**
@@ -503,7 +524,7 @@ export class MapComponent implements OnInit {
     if (this.zoom > 10) {
       if (!this.mapCacheVehicles.get(id)) {//on evite de recharger les memes vehicules
         this.mapCacheVehicles.set(id, []);
-        console.log("lance: " + id);
+        //console.log("lance: " + id);
         this.relance(id);
       }
     } 
@@ -521,7 +542,7 @@ export class MapComponent implements OnInit {
             this.mapCacheVehicles.get(id).push(
               L.marker([vehicle.coord[0], vehicle.coord[1]], {
                 rotationAngle: vehicle.bearing,
-                icon: (this.busIcons[0])
+                icon: (vehicle.bearing==0?this.busIcons[3]:this.busIcons[0])
               }).bindPopup("id: " + vehicle.id + ", bearing:" + vehicle.bearing).addTo(this.myMap));
           });
         }
@@ -531,7 +552,7 @@ export class MapComponent implements OnInit {
 
   relance(id: string) {
     if (this.mapCacheVehicles.get(id)) {
-      console.log("relance: " + id);
+      //console.log("relance: " + id);
       this.loadVehicles(id);
       setTimeout(() => {
         this.relance(id);

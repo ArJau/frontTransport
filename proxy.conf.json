@@ -1,5 +1,5 @@
 { 
-    "/transport-api": { "secure": false ,"changeOrigin": true, "target": "http://127.0.0.1:8282" },
+    "/transport-api": { "secure": false ,"changeOrigin": true, "target": "http://15.237.111.102:8282" },
     "/api": { "secure": false , "changeOrigin": true, "target": "http://127.0.0.1:8085" }, 
     "/search": { "secure": false, "changeOrigin": true, "target": "https://nominatim.openstreetmap.org" }
 }

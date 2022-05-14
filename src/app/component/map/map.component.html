@@ -1,5 +1,5 @@
 <div class="box">
-  <div id="recherche">
+  <div id="recherche" style="padding: 10px">
     <app-recherche-lieu (locationSelected)="getAddress($event)"></app-recherche-lieu>
     <app-detail-stop *ngIf="detailStopService"></app-detail-stop>
   </div>

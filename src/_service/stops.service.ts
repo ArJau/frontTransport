@@ -15,7 +15,7 @@ export class StopsService {
 
   public getDescriptionReseaux$(): Observable<DescReseau[]> {
     let url = DATA_API + `/public/lstDescriptionReseau?`;
-    console.log("url = " + url);
+    //console.log("url = " + url);
     return this._http.get<DescReseau[]>(url)
   }
 
@@ -23,7 +23,7 @@ export class StopsService {
     const params = new HttpParams()
       .set('idPosition', idPosition);
     let url = DATA_API + `/public/lstStopsTrajet?${params.toString()}`;
-    console.log("url = " + url);
+    //console.log("url = " + url);
     return this._http.get<Trajet[]>(url)
   }
 
@@ -32,13 +32,13 @@ export class StopsService {
       .set('idPosition', idPosition)
       .set('idReseau', idReseau);
     let url = DATA_API + `/public/lstStopsTrajetIdPositionIdReseau?${params.toString()}`;
-    console.log("url = " + url);
+    //console.log("url = " + url);
     return this._http.get<Trajet[]>(url)
   }
 
   public getRealtimeVehiclesByIdReseaux$(idReseau: string): Observable<realTimesVehicles[]> {
     let url = DATA_API + `/public/realtimesvehicles/${idReseau}`;
-    console.log("url = " + url);
+    //console.log("url = " + url);
     return this._http.get<realTimesVehicles[]>(url)
   }
 
@@ -50,7 +50,7 @@ export class StopsService {
     idsReseau = idsReseau.substring(0,idsReseau.length-1);
     const params = new HttpParams().set('idsReseau', idsReseau);
     let url = DATA_API + `/public/realtimesalerts?${params.toString()}`;
-    console.log("url = " + url);
+    //console.log("url = " + url);
     return this._http.get<realTimesAlerts[]>(url)
   }
 
