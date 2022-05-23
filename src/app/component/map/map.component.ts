@@ -37,9 +37,24 @@ export class MapComponent implements OnInit {
   public mapIdReseauIdPosition = new Map();
   public mapIdReseauIdRoute = new Map();
   public mapIdReseauIdStopTrajet= new Map();
+  public compteur = 0;
+  public debLat = 0;
+  public debLon = 0;
+  public finLat = 0;
+  public finLon = 0;
+  
+  public distance = 0;
+
 
   public mapCacheVehicles = new Map();//mis en cache de véhicule temp réel
   public lstAlert = [];
+
+  public tabColor = [
+    "641e16", "c0392b", "633974", "af7ac5", "6c3483", "5499c7", 
+    "117864", "1abc9c", "27ae60", "2ecc71", "7d6608", "d4ac0d", 
+    "f7dc6f", "b9770e", "d68910", "ba4a00", "7b7d7d", "aab7b8", 
+    "17202a", "566573", "58d68d", "FF0000", "00FFFF","FF00FF", 
+    "0000FF", "00FF00","FFFF00", "008000", "FF69B", "FFA500"];
 
   constructor(private _stopsService: StopsService,
     private _lstReseauxObservableService: LstReseauxObservableService,
@@ -339,7 +354,6 @@ export class MapComponent implements OnInit {
             //le 2eme: tableau des lignes latLng
             //le 3ème: tableau des s polyline
             trajet.stops.forEach(stop => {
-
               this.mapIdReseauIdRoute.get(idReseau).get(trajet.route_id)[0].push(this.marker(stop, trajet));
 
               if (trajet.shapes.length == 0) {//concerne les réseaux qui n'ont pas shape associé, on relie alors les points entre eux
@@ -354,9 +368,11 @@ export class MapComponent implements OnInit {
                   L.latLng(trajet.shapes[i], trajet.shapes[i + 1]));
               }
             }
+            trajet.route_color
             this.mapIdReseauIdRoute.get(idReseau).get(trajet.route_id)[2].push(
               L.polyline(this.mapIdReseauIdRoute.get(idReseau).get(trajet.route_id)[1], {
-                color: "#" + trajet.route_color,
+                //color: "#" + trajet.route_color,
+                color: "#" +(trajet.route_color?trajet.route_color:this.tabColor[Math.floor(Math.random()*this.tabColor.length)]),
                 weight: 4
               })
                 .addEventListener("click", (line) => {
@@ -465,6 +481,15 @@ export class MapComponent implements OnInit {
         let stopDto =  StopDto.stopCompletStop(MapComponent.mapDescReseau.get(trajet.id), trajet, stop);
         this._detailStopService.stopDetail = stopDto;
         this.markSelected = true;
+        this.compteur++;
+        if (this.compteur % 2 == 0){
+          this.debLat = stop.stop_lat;
+          this.debLon = stop.stop_lat;
+        }else{
+          this.finLat = stop.stop_lat;
+          this.finLon = stop.stop_lat;
+        }
+        this.distance = (10000 * Math.sqrt(Math.pow(this.finLat - this.debLat, 2) + Math.pow(this.finLon- this.debLon, 2))) / 90;
         this.multiSelection(trajet);
       })
       .addEventListener("mouseover", () => {

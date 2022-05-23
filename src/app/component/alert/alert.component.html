@@ -1,6 +1,10 @@
+<fieldset class="scheduler-border" *ngIf="alerts.length !=0">
+    <legend>Alertes:</legend>
 <div *ngFor="let alert of alerts">
     <input type="checkbox" title="Désactiver les alertes liées à ce réseau" checked=true
             (change)="onCheckboxChange(alert, $event)" />
-    <b>{{alert.titleReseau}}</b>
-    {{alert.headerAlert}}
+    <span title="{{alert.textAlert}}"><b>{{alert.titleReseau}}</b>
+        {{alert.headerAlert}}
+    </span>
 </div>
+</fieldset>
